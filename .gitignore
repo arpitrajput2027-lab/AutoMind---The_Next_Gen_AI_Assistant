@@ -1,0 +1,51 @@
+# ===== SECRETS =====
+backend/.env
+frontend/.env.local
+**/.env
+**/.env.*
+
+# ===== LARGE VIDEO FILES (exceed GitHub 100MB limit) =====
+backend/AutoMind.mp4
+backend/AutoMind_X.mp4
+*.mp4
+*.mov
+*.avi
+CMD.txt
+# ===== PYTHON =====
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+env/
+
+# ===== RUNTIME STATE =====
+backend/memory.json
+backend/audio/*.mp3
+backend/audio/*.wav
+
+# ===== FRONTEND (also covered by frontend/.gitignore) =====
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/build/
+frontend/.vercel/
+frontend/*.tsbuildinfo
+
+# ===== CLAUDE CODE INTERNALS =====
+.claude/
+
+# ===== OS =====
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ===== LOGS =====
+*.log
+npm-debug.log*
+yarn-debug.log*

@@ -1,0 +1,54 @@
+# GUI & Desktop
+customtkinter==5.2.0
+pillow==10.1.0
+
+# Automation
+pyautogui==0.9.54
+pygetwindow==0.0.9
+keyboard==0.13.5
+pynput==1.7.6
+
+# Audio
+sounddevice==0.4.6
+soundfile==0.12.1
+pydub==0.25.1
+
+# Speech (Legacy - Backup)
+# openai-whisper==20231117
+edge-tts==6.1.9
+
+# Sarvam AI (NEW)
+requests==2.31.0
+
+# Document Processing
+python-docx==1.1.0
+openpyxl==3.1.2
+python-pptx==0.6.23
+
+# Email
+secure-smtplib==0.1.1
+
+# Web
+beautifulsoup4==4.12.2
+selenium==4.15.2
+
+# Environment
+python-dotenv==1.0.0
+
+# System Control
+screen-brightness-control==0.21.0
+pycaw==20230407
+comtypes==1.2.0
+
+# Mobile Integration
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+websockets==12.0
+python-multipart==0.0.6
+
+# Vision
+opencv-python==4.8.1.78
+
+# Utilities
+pyperclip==1.8.2
+psutil==5.9.6

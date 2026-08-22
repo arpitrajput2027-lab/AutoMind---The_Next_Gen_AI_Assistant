@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0a0e1a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
+    <title>⚡ VENOM AI - Mobile</title>
+    
+    <link rel="stylesheet" href="/static/styles.css">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/static/manifest.json">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="bg-animated"></div>
+    
+    <!-- Main Container -->
+    <div class="container">
+        
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo-section">
+                    <div class="logo-icon">⚡</div>
+                    <div>
+                        <h1 class="logo-text">VENOM</h1>
+                        <p class="logo-subtitle">Autonomous AI</p>
+                    </div>
+                </div>
+                
+                <div class="status-indicator" id="statusIndicator">
+                    <div class="status-dot"></div>
+                    <span class="status-text">Connected</span>
+                </div>
+            </div>
+        </header>
+        
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">🎯</div>
+                <div class="stat-value" id="taskCount">0</div>
+                <div class="stat-label">Tasks</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">⚡</div>
+                <div class="stat-value" id="speedStatus">FAST</div>
+                <div class="stat-label">Speed</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">🔥</div>
+                <div class="stat-value" id="activeStatus">ACTIVE</div>
+                <div class="stat-label">Status</div>
+            </div>
+        </div>
+        
+        <!-- Voice Visualizer -->
+        <div class="visualizer-container">
+            <canvas id="visualizer"></canvas>
+            <div class="visualizer-overlay">
+                <div class="pulse-ring" id="pulseRing"></div>
+                <button class="mic-button" id="micButton">
+                    <svg class="mic-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                        <line x1="12" y1="19" x2="12" y2="23"/>
+                        <line x1="8" y1="23" x2="16" y2="23"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Chat Messages -->
+        <div class="chat-container" id="chatContainer">
+            <div class="welcome-message">
+                <div class="welcome-icon">⚡</div>
+                <h2>VENOM AI Activated</h2>
+                <p>Tap the mic or type your command below</p>
+            </div>
+        </div>
+        
+        <!-- Input Section -->
+        <div class="input-section">
+            <div class="input-container">
+                <input 
+                    type="text" 
+                    id="commandInput" 
+                    class="command-input" 
+                    placeholder="Type your command..."
+                    autocomplete="off"
+                >
+                <button class="send-button" id="sendButton">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <line x1="22" y1="2" x2="11" y2="13"/>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <button class="quick-btn" data-command="open youtube">
+                <span class="quick-icon">📺</span>
+                <span class="quick-label">YouTube</span>
+            </button>
+            
+            <button class="quick-btn" data-command="send whatsapp message">
+                <span class="quick-icon">💬</span>
+                <span class="quick-label">WhatsApp</span>
+            </button>
+            
+            <button class="quick-btn" data-command="open notepad">
+                <span class="quick-icon">📝</span>
+                <span class="quick-label">Notepad</span>
+            </button>
+            
+            <button class="quick-btn" data-command="analyze screen">
+                <span class="quick-icon">📸</span>
+                <span class="quick-label">Screenshot</span>
+            </button>
+            
+            <button class="quick-btn" data-command="set brightness 50">
+                <span class="quick-icon">🔆</span>
+                <span class="quick-label">Brightness</span>
+            </button>
+            
+            <button class="quick-btn" data-command="volume up">
+                <span class="quick-icon">🔊</span>
+                <span class="quick-label">Volume</span>
+            </button>
+        </div>
+        
+    </div>
+    
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+        <p class="loading-text">Processing...</p>
+    </div>
+    
+    <script src="/static/app.js"></script>
+</body>
+</html>
