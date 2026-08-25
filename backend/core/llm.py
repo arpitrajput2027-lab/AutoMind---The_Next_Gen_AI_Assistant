@@ -9,7 +9,7 @@ import re
 
 load_dotenv()
 
-GROQ_API_KEY = os.getenv("GROK_API_KEY")  # gsk_ prefix = Groq (groq.com) key
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")  # gsk_ prefix = Groq (groq.com) key
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 # New google-genai SDK -- create client once
@@ -17,7 +17,7 @@ _gemini_client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else Non
 
 # Groq API (not xAI Grok) -- uses OpenAI-compatible endpoint
 GROQ_LLM_URL = "https://api.groq.com/openai/v1/chat/completions"
-GROQ_MODEL = "llama-3.3-70b-versatile"   # fast & free on Groq
+GROQ_MODEL = "openai/gpt-oss-120b"        # 120B param, available on Groq
 GEMINI_MODEL = "gemini-2.5-flash"
 # GROK_MODEL = "openai/gpt-oss-120b"
 
@@ -31,8 +31,12 @@ def set_active_llm(model_name: str):
     global ACTIVE_MODEL
     ACTIVE_MODEL = model_name.lower()
 
+def _strip_think_tags(text: str) -> str:
+    """Remove Qwen-style <think>...</think> reasoning blocks."""
+    return re.sub(r"<think>[\s\S]*?</think>\s*", "", text).strip()
+
 def _ask_groq(messages, max_tokens, temperature):
-    """Call Groq API (groq.com) -- fast LLaMA inference."""
+    """Call Groq API (groq.com) -- fast inference."""
     if not GROQ_API_KEY:
         return None, "error"
     
@@ -50,13 +54,15 @@ def _ask_groq(messages, max_tokens, temperature):
         response = requests.post(GROQ_LLM_URL, headers=headers, json=payload, timeout=60)
         if response.status_code == 200:
             data = response.json()
-            return data["choices"][0]["message"]["content"].strip(), data["choices"][0].get("finish_reason", "stop")
+            raw = data["choices"][0]["message"]["content"].strip()
+            return _strip_think_tags(raw), data["choices"][0].get("finish_reason", "stop")
         else:
             print(f"[WARN] Groq Error {response.status_code}: {response.text[:200]}")
             return None, "error"
     except Exception as e:
         print(f"[WARN] Groq Request Error: {e}")
         return None, "error"
+
 
 def _ask_gemini(prompt_text, max_tokens, temperature):
     if not _gemini_client:
