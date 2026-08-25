@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import VoiceButton from "./VoiceButton";
+import { Send, FileText, Globe, Code, File as FileIcon, Mic, Loader2, Volume2, VolumeX, Bot, Mail } from "lucide-react";
 
 export interface FileCard {
   path: string;
@@ -20,36 +21,15 @@ export interface Message {
   fileCard?: FileCard;
 }
 
-const TASK_COLORS: Record<string, string> = {
-  vscode:      "#00d9ff",
-  system:      "#ff6b35",
-  email:       "#a855f7",
-  whatsapp:    "#00ff88",
-  powerpoint:  "#ffbd2e",
-  word:        "#00d9ff",
-  youtube:     "#ff4444",
-  chat:        "var(--text-secondary)",
-};
-
-const TASK_ICONS: Record<string, string> = {
-  vscode:      "💻",
-  system:      "⚙️",
-  email:       "📧",
-  whatsapp:    "💬",
-  powerpoint:  "📊",
-  word:        "📝",
-  youtube:     "▶️",
-  chat:        "🤖",
-};
-
 const QUICK_COMMANDS = [
-  { label: "Write Python code", icon: "💻" },
-  { label: "Set volume to 50%", icon: "🔊" },
-  { label: "Send a WhatsApp message", icon: "💬" },
-  { label: "Create a PowerPoint", icon: "📊" },
-  { label: "Search YouTube", icon: "▶️" },
-  { label: "Draft an email", icon: "📧" },
+  { label: "Write Python code", icon: <Code size={18} /> },
+  { label: "Draft an email", icon: <MailIcon size={18} /> },
+  { label: "Send a WhatsApp message", icon: <MessageIcon size={18} /> },
+  { label: "Create a PowerPoint", icon: <FileText size={18} /> },
 ];
+
+function MailIcon({size}: {size: number}) { return <Mail size={size} />; }
+function MessageIcon({size}: {size: number}) { return <span style={{fontSize: size}}><svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></span>; }
 
 interface ChatPanelProps {
   messages: Message[];
@@ -98,74 +78,27 @@ export default function ChatPanel({
   };
 
   return (
-    <div style={{
-      height: "100%", display: "flex", flexDirection: "column",
-      background: "rgba(3,7,13,0.7)",
-      border: "1px solid var(--border-subtle)",
-      borderRadius: "10px",
-      overflow: "hidden",
-    }}>
+    <div className="h-full flex flex-col bg-white border border-black/10 rounded-xl shadow-soft overflow-hidden relative">
       {/* Messages area */}
-      <div style={{
-        flex: 1, overflowY: "auto", padding: "20px",
-        display: "flex", flexDirection: "column", gap: "16px",
-      }}>
+      <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-6">
+        
         {/* Empty state */}
         {messages.length === 0 && (
-          <div style={{
-            flex: 1, display: "flex", flexDirection: "column",
-            alignItems: "center", justifyContent: "center",
-            gap: "32px", padding: "40px 0",
-          }}>
-            <div style={{ textAlign: "center" }}>
-              <div style={{
-                fontFamily: "var(--font-syne)", fontWeight: 800,
-                fontSize: "1.5rem", color: "#e8f4fd", marginBottom: "8px",
-              }}>
-                What can I do for you?
-              </div>
-              <div style={{
-                fontFamily: "var(--font-display)", fontSize: "0.875rem",
-                color: "var(--text-muted)",
-              }}>
-                Try a command below or type anything
-              </div>
+          <div className="flex-1 flex flex-col items-center justify-center gap-8 py-10">
+            <div className="text-center space-y-3">
+              <h1 className="heading-editorial text-3xl">What can I do for you?</h1>
+              <p className="text-muted font-sans text-sm">Select a quick command or type your own</p>
             </div>
 
-            {/* Quick commands grid */}
-            <div style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
-              gap: "10px", width: "100%",
-            }}>
+            <div className="grid grid-cols-2 gap-4 w-full max-w-lg">
               {QUICK_COMMANDS.map((cmd) => (
                 <button
                   key={cmd.label}
                   onClick={() => onSend(cmd.label)}
-                  style={{
-                    padding: "12px 14px",
-                    background: "rgba(0,217,255,0.04)",
-                    border: "1px solid var(--border-subtle)",
-                    borderRadius: "8px",
-                    color: "var(--text-secondary)",
-                    fontFamily: "var(--font-display)", fontSize: "0.8rem",
-                    cursor: "pointer", textAlign: "left",
-                    transition: "all 0.2s ease",
-                    display: "flex", alignItems: "center", gap: "8px",
-                  }}
-                  onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border-glow)";
-                    (e.currentTarget as HTMLButtonElement).style.color = "var(--cyan)";
-                    (e.currentTarget as HTMLButtonElement).style.background = "rgba(0,217,255,0.07)";
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border-subtle)";
-                    (e.currentTarget as HTMLButtonElement).style.color = "var(--text-secondary)";
-                    (e.currentTarget as HTMLButtonElement).style.background = "rgba(0,217,255,0.04)";
-                  }}
+                  className="flex items-center gap-3 p-4 bg-cream border border-black/5 rounded-xl hover:border-bronze hover:bg-parchment-light transition-all text-left text-ink shadow-sm"
                 >
-                  <span>{cmd.icon}</span>
-                  <span>{cmd.label}</span>
+                  <span className="text-bronze">{cmd.icon}</span>
+                  <span className="font-sans text-sm font-medium">{cmd.label}</span>
                 </button>
               ))}
             </div>
@@ -176,124 +109,54 @@ export default function ChatPanel({
         {messages.map((msg) => (
           <div
             key={msg.id}
-            style={{
-              display: "flex",
-              flexDirection: msg.role === "user" ? "row-reverse" : "row",
-              gap: "10px",
-              alignItems: "flex-start",
-              animation: "fadeInUp 0.3s ease forwards",
-            }}
+            className={`flex gap-4 items-start animate-fade-up ${msg.role === "user" ? "flex-row-reverse" : "flex-row"}`}
           >
-            {/* Avatar dot */}
-            <div style={{
-              width: "28px", height: "28px", borderRadius: "50%",
-              background: msg.role === "user"
-                ? "linear-gradient(135deg,var(--cyan),#0099bb)"
-                : "linear-gradient(135deg,#a855f7,#7c3aed)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: "0.75rem", fontWeight: 700,
-              color: "white", flexShrink: 0,
-            }}>
+            {/* Avatar */}
+            <div className={`w-8 h-8 rounded flex items-center justify-center flex-shrink-0 text-white font-serif font-bold text-sm shadow-sm ${msg.role === "user" ? "bg-ink" : "bg-bronze"}`}>
               {msg.role === "user" ? "U" : "A"}
             </div>
 
             {/* Bubble */}
-            <div style={{
-              maxWidth: "75%",
-              padding: "12px 16px",
-              borderRadius: msg.role === "user"
-                ? "16px 4px 16px 16px"
-                : "4px 16px 16px 16px",
-              background: msg.role === "user"
-                ? "rgba(0,217,255,0.1)"
-                : "rgba(168,85,247,0.08)",
-              border: `1px solid ${msg.role === "user"
-                ? "rgba(0,217,255,0.2)"
-                : "rgba(168,85,247,0.15)"}`,
-            }}>
+            <div className={`max-w-[80%] p-4 ${msg.role === "user" ? "bg-cream border border-black/5 rounded-[16px_4px_16px_16px]" : "bg-white border border-black/10 shadow-sm rounded-[4px_16px_16px_16px]"}`}>
+              
               {/* Task type badge */}
               {msg.taskType && msg.taskType !== "chat" && (
-                <div style={{
-                  display: "flex", alignItems: "center", gap: "6px",
-                  marginBottom: "6px",
-                }}>
-                  <span style={{ fontSize: "0.7rem" }}>
-                    {TASK_ICONS[msg.taskType] || "🤖"}
-                  </span>
-                  <span style={{
-                    fontFamily: "var(--font-mono)", fontSize: "0.6rem",
-                    color: TASK_COLORS[msg.taskType] || "var(--text-muted)",
-                    textTransform: "uppercase", letterSpacing: "0.1em",
-                  }}>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="label-mono text-[0.65rem] text-bronze px-2 py-0.5 bg-bronze/10 rounded-sm">
                     {msg.taskType}
                   </span>
                 </div>
               )}
 
-              <p style={{
-                fontFamily: "var(--font-display)", fontSize: "0.875rem",
-                color: "#e8f4fd", lineHeight: 1.65,
-                margin: 0, whiteSpace: "pre-wrap",
-              }}>
+              <div className="font-sans text-[0.9rem] text-ink whitespace-pre-wrap leading-relaxed">
                 {msg.content}
-              </p>
+              </div>
 
-              {/* File card — shown when a file was created */}
+              {/* File card */}
               {msg.fileCard && (
-                <div style={{
-                  marginTop: "10px",
-                  padding: "10px 12px",
-                  background: "rgba(0,217,255,0.05)",
-                  border: "1px solid rgba(0,217,255,0.18)",
-                  borderRadius: "8px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  gap: "10px",
-                }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0 }}>
-                    <span style={{ fontSize: "1rem", flexShrink: 0 }}>
-                      {msg.fileCard.file_type === "html" ? "🌐"
-                        : msg.fileCard.file_type === "docx" ? "📝"
-                        : msg.fileCard.file_type === "code" ? "💻"
-                        : "📄"}
+                <div className="mt-4 p-3 bg-cream border border-black/10 rounded-lg flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-2 overflow-hidden">
+                    <span className="text-muted">
+                      {msg.fileCard.file_type === "html" ? <Globe size={16}/>
+                        : msg.fileCard.file_type === "docx" ? <FileText size={16}/>
+                        : msg.fileCard.file_type === "code" ? <Code size={16}/>
+                        : <FileIcon size={16}/>}
                     </span>
-                    <span style={{
-                      fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.7rem",
-                      color: "#c8e6f0", overflow: "hidden", textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                    }}>
+                    <span className="font-mono text-xs text-ink truncate">
                       {msg.fileCard.name}
                     </span>
                   </div>
                   <Link
                     href={`/editor?path=${encodeURIComponent(msg.fileCard.path)}`}
                     target="_blank"
-                    style={{
-                      padding: "5px 12px",
-                      borderRadius: "6px",
-                      background: "linear-gradient(135deg, #a855f7, #7c3aed)",
-                      color: "#fff",
-                      fontFamily: "'IBM Plex Mono', monospace",
-                      fontSize: "0.62rem",
-                      fontWeight: 600,
-                      textDecoration: "none",
-                      letterSpacing: "0.06em",
-                      flexShrink: 0,
-                      whiteSpace: "nowrap",
-                    }}
+                    className="flex-shrink-0 px-3 py-1.5 bg-ink text-white font-mono text-[0.65rem] uppercase tracking-widest rounded-md hover:bg-bronze transition-colors"
                   >
                     Open Editor →
                   </Link>
                 </div>
               )}
 
-              <div style={{
-                marginTop: "6px",
-                fontFamily: "var(--font-mono)", fontSize: "0.6rem",
-                color: "var(--text-muted)",
-                textAlign: msg.role === "user" ? "right" : "left",
-              }}>
+              <div className={`mt-2 font-mono text-[0.65rem] text-meta ${msg.role === "user" ? "text-right" : "text-left"}`}>
                 {new Date(msg.timestamp).toLocaleTimeString()}
               </div>
             </div>
@@ -302,30 +165,17 @@ export default function ChatPanel({
 
         {/* Thinking indicator */}
         {isThinking && (
-          <div style={{
-            display: "flex", gap: "10px", alignItems: "flex-start",
-            animation: "fadeInUp 0.3s ease forwards",
-          }}>
-            <div style={{
-              width: "28px", height: "28px", borderRadius: "50%",
-              background: "linear-gradient(135deg,#a855f7,#7c3aed)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: "0.75rem", fontWeight: 700, color: "white", flexShrink: 0,
-            }}>A</div>
-            <div style={{
-              padding: "12px 16px",
-              background: "rgba(168,85,247,0.08)",
-              border: "1px solid rgba(168,85,247,0.15)",
-              borderRadius: "4px 16px 16px 16px",
-              display: "flex", gap: "5px", alignItems: "center",
-            }}>
+          <div className="flex gap-4 items-start animate-fade-up">
+            <div className="w-8 h-8 rounded bg-bronze flex items-center justify-center text-white font-serif font-bold text-sm shadow-sm flex-shrink-0">
+              A
+            </div>
+            <div className="p-4 bg-white border border-black/10 shadow-sm rounded-[4px_16px_16px_16px] flex items-center gap-2">
               {[0, 1, 2].map((i) => (
-                <div key={i} style={{
-                  width: "6px", height: "6px", borderRadius: "50%",
-                  background: "#a855f7",
-                  animation: `bounce 1s ease-in-out infinite`,
-                  animationDelay: `${i * 0.15}s`,
-                }} />
+                <div 
+                    key={i} 
+                    className="w-1.5 h-1.5 rounded-full bg-bronze animate-pulse" 
+                    style={{ animationDelay: `${i * 150}ms` }} 
+                />
               ))}
             </div>
           </div>
@@ -335,15 +185,9 @@ export default function ChatPanel({
       </div>
 
       {/* Input area */}
-      <div style={{
-        borderTop: "1px solid var(--border-subtle)",
-        padding: "16px",
-        background: "rgba(0,5,10,0.6)",
-      }}>
-        <div style={{
-          display: "flex", gap: "10px", alignItems: "flex-end",
-        }}>
-          {/* Voice button */}
+      <div className="p-4 bg-white border-t border-black/5">
+        <div className="flex items-end gap-3 max-w-4xl mx-auto">
+          
           <VoiceButton
             onTranscript={(text) => {
               setInput(text);
@@ -352,148 +196,58 @@ export default function ChatPanel({
             disabled={isThinking}
           />
 
-          {/* Text input */}
-          <textarea
-            ref={inputRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKey}
-            placeholder="Type a command or question... (Enter to send, Shift+Enter for newline)"
-            disabled={isThinking}
-            rows={1}
-            style={{
-              flex: 1,
-              background: "rgba(0,5,10,0.8)",
-              border: "1px solid var(--border-subtle)",
-              borderRadius: "8px",
-              padding: "10px 14px",
-              color: "#e8f4fd",
-              fontFamily: "var(--font-display)", fontSize: "0.875rem",
-              outline: "none", resize: "none", lineHeight: 1.5,
-              maxHeight: "120px", overflowY: "auto",
-              transition: "border-color 0.2s",
-              opacity: isThinking ? 0.5 : 1,
-            }}
-            onFocus={(e) => (e.target.style.borderColor = "var(--border-glow)")}
-            onBlur={(e) => (e.target.style.borderColor = "var(--border-subtle)")}
-          />
+          <div className="flex-1 relative">
+            <textarea
+                ref={inputRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKey}
+                placeholder="Ask anything or command VENOM..."
+                disabled={isThinking}
+                rows={1}
+                className="w-full input-editorial resize-none max-h-32 overflow-y-auto pr-24 py-3 min-h-[48px]"
+            />
+            
+            {/* Inner Controls */}
+            <div className="absolute right-2 bottom-2 flex items-center gap-1">
+                <button
+                    onClick={onAiModeToggle}
+                    className="label-mono flex items-center gap-1 px-2 py-1 rounded hover:bg-black/5 text-muted transition-colors"
+                    title="Toggle Sarvam/Edge"
+                >
+                    <Bot size={14} className={aiMode === "sarvam" ? "text-bronze" : ""} />
+                    {aiMode === "sarvam" ? "SRV" : "EDG"}
+                </button>
+                
+                {aiMode === "sarvam" && (
+                    <button
+                        onClick={onSarvamSTTToggle}
+                        className={`p-1.5 rounded-full transition-colors ${sarvamSTTState === 'recording' ? 'bg-red-50 text-red-500 animate-pulse' : 'text-muted hover:bg-black/5 hover:text-bronze'}`}
+                    >
+                        {sarvamSTTState === 'processing' ? <Loader2 size={16} className="animate-spin" /> : <Mic size={16} />}
+                    </button>
+                )}
 
-          {/* AI Mode toggle — Edge ↔ Sarvam */}
-          <button
-            onClick={onAiModeToggle}
-            title={`Switch to ${aiMode === "edge" ? "Sarvam" : "Edge"} AI mode`}
-            style={{
-              height: "40px", borderRadius: "20px",
-              padding: "0 12px",
-              border: `1px solid ${aiMode === "sarvam" ? "rgba(168,85,247,0.5)" : "var(--border-subtle)"}`,
-              background: aiMode === "sarvam" ? "rgba(168,85,247,0.12)" : "transparent",
-              color: aiMode === "sarvam" ? "#a855f7" : "var(--text-muted)",
-              cursor: "pointer", display: "flex", alignItems: "center",
-              gap: "5px", flexShrink: 0, transition: "all 0.2s",
-              fontFamily: "var(--font-code)", fontSize: "0.65rem", fontWeight: 600,
-              letterSpacing: "0.06em",
-            }}
-          >
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor">
-              <circle cx="12" cy="12" r="10"/>
-            </svg>
-            {aiMode === "sarvam" ? "SARVAM" : "EDGE"}
-          </button>
+                {aiMode === "edge" && (
+                    <button
+                        onClick={onVoiceModeToggle}
+                        className={`p-1.5 rounded-full transition-colors ${voiceMode ? 'text-bronze bg-bronze/10' : 'text-muted hover:bg-black/5'}`}
+                    >
+                        {voiceMode ? <Volume2 size={16} /> : <VolumeX size={16} />}
+                    </button>
+                )}
+            </div>
+          </div>
 
-          {/* Sarvam STT mic — only shown in sarvam mode */}
-          {aiMode === "sarvam" && (
-            <button
-              onClick={onSarvamSTTToggle}
-              title={
-                sarvamSTTState === "recording" ? "Stop recording"
-                : sarvamSTTState === "processing" ? "Processing…"
-                : "Record with Sarvam STT"
-              }
-              style={{
-                width: "40px", height: "40px", borderRadius: "50%",
-                border: `1px solid ${
-                  sarvamSTTState === "recording" ? "rgba(255,80,80,0.6)"
-                  : sarvamSTTState === "processing" ? "rgba(168,85,247,0.5)"
-                  : "rgba(168,85,247,0.3)"
-                }`,
-                background:
-                  sarvamSTTState === "recording" ? "rgba(255,80,80,0.12)"
-                  : sarvamSTTState === "processing" ? "rgba(168,85,247,0.12)"
-                  : "transparent",
-                color:
-                  sarvamSTTState === "recording" ? "#ff5050"
-                  : sarvamSTTState === "processing" ? "#a855f7"
-                  : "#a855f7",
-                cursor: sarvamSTTState === "processing" ? "not-allowed" : "pointer",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                transition: "all 0.2s", flexShrink: 0, fontSize: "1rem",
-                animation: sarvamSTTState === "recording" ? "pulse-mic 1s ease infinite" : "none",
-              }}
-            >
-              {sarvamSTTState === "processing" ? (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
-                  style={{ animation: "spin 0.8s linear infinite" }}>
-                  <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4"/>
-                </svg>
-              ) : "🎙️"}
-            </button>
-          )}
-
-          {/* Edge TTS voice toggle — only shown in edge mode */}
-          {aiMode === "edge" && (
-            <button
-              onClick={onVoiceModeToggle}
-              title={voiceMode ? "Voice responses ON" : "Voice responses OFF"}
-              style={{
-                width: "40px", height: "40px", borderRadius: "50%",
-                border: `1px solid ${voiceMode ? "rgba(0,255,136,0.5)" : "var(--border-subtle)"}`,
-                background: voiceMode ? "rgba(0,255,136,0.1)" : "transparent",
-                color: voiceMode ? "#00ff88" : "var(--text-muted)",
-                cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
-                transition: "all 0.2s", flexShrink: 0, fontSize: "1rem",
-              }}
-            >
-              🔊
-            </button>
-          )}
-
-          {/* Send button */}
           <button
             onClick={handleSend}
             disabled={!input.trim() || isThinking}
-            style={{
-              width: "40px", height: "40px", borderRadius: "8px",
-              background: (!input.trim() || isThinking)
-                ? "rgba(0,217,255,0.1)"
-                : "linear-gradient(135deg,var(--cyan),#0099bb)",
-              border: "none",
-              color: (!input.trim() || isThinking) ? "var(--text-muted)" : "var(--bg-void)",
-              cursor: (!input.trim() || isThinking) ? "not-allowed" : "pointer",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              transition: "all 0.2s", flexShrink: 0,
-            }}
+            className={`w-12 h-12 flex-shrink-0 rounded-lg flex items-center justify-center transition-colors shadow-sm ${!input.trim() || isThinking ? 'bg-parchment text-muted cursor-not-allowed' : 'bg-ink text-cream hover:bg-bronze'}`}
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <line x1="22" y1="2" x2="11" y2="13"/>
-              <polygon points="22 2 15 22 11 13 2 9 22 2"/>
-            </svg>
+            <Send size={18} />
           </button>
         </div>
       </div>
-
-      <style>{`
-        @keyframes bounce {
-          0%, 80%, 100% { transform: scale(0); opacity: 0.3; }
-          40% { transform: scale(1); opacity: 1; }
-        }
-        @keyframes pulse-mic {
-          0%, 100% { box-shadow: 0 0 0 0 rgba(255,80,80,0.4); }
-          50%       { box-shadow: 0 0 0 6px rgba(255,80,80,0); }
-        }
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
     </div>
   );
 }

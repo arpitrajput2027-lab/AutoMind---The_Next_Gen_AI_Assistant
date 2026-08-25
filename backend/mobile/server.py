@@ -408,13 +408,16 @@ async def edit_file_api(body: dict):
         from tools.file_tools import edit_file_with_llm
         result = await loop.run_in_executor(None, edit_file_with_llm, path, instruction)
 
-        # Re-read updated file
-        file_data = await get_file(path)
+        # Re-read updated file locally instead of calling the API endpoint
+        preview_data = await _read_file_for_preview(path)
+        if not preview_data:
+            raise HTTPException(status_code=404, detail=f"File not found after edit: {path}")
+
         return {
             "success": True,
             "message": result,
-            "content": file_data["content"],
-            "file_type": file_data["file_type"],
+            "content": preview_data["content"],
+            "file_type": preview_data["file_type"],
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -480,8 +483,22 @@ async def _run_command(websocket: WebSocket, user_input: str):
     except asyncio.CancelledError:
         await websocket.send_json({"type": "stopped", "message": "Execution stopped."})
     except Exception as e:
-        print(f"Command error: {e}")
-        await websocket.send_json({"type": "error", "message": str(e)})
+        # Check if it's our custom EmailPreviewException by name to avoid tight coupling if needed,
+        # or import it directly.
+        from tools.preview_tools import EmailPreviewException
+        if isinstance(e, EmailPreviewException):
+            await websocket.send_json({
+                "type": "email_preview",
+                "preview": {
+                    "to": e.to,
+                    "subject": e.subject,
+                    "body": e.body,
+                    "from": "VENOM AI"
+                }
+            })
+        else:
+            print(f"Command error: {e}")
+            await websocket.send_json({"type": "error", "message": str(e)})
 
 
 async def _run_edit(websocket: WebSocket, file_path: str, instruction: str):
@@ -571,10 +588,33 @@ async def _handle_websocket(websocket: WebSocket):
                         current_task = asyncio.create_task(
                             _run_edit(websocket, file_path, instruction)
                         )
+                
+                # ── Email Confirm ─────────────────────────────────────────────
+                elif command_type == "email_confirm":
+                    to = data_json.get("to", "")
+                    subject = data_json.get("subject", "")
+                    body = data_json.get("body", "")
+                    from tools.email import send_email_direct
+                    
+                    def _send_email():
+                        return send_email_direct(to, subject, body)
+                    
+                    loop = asyncio.get_event_loop()
+                    result = await loop.run_in_executor(None, _send_email)
+                    await websocket.send_json({
+                        "type": "response",
+                        "message": result,
+                        "success": "Sent successfully" in result
+                    })
 
                 # ── Model switch ─────────────────────────────────────────────
                 elif command_type == "model_switch":
-                    model = data_json.get("model", "sarvam")
+                    model = data_json.get("model", "gemini")
+                    
+                    # Update active model in llm.py
+                    from core.llm import set_active_llm
+                    set_active_llm(model)
+                    
                     await websocket.send_json({
                         "type": "model_switched",
                         "model": model,

@@ -52,10 +52,10 @@ export default function Footer() {
                 fontFamily: "var(--font-syne)",
                 fontWeight: "800",
                 fontSize: "1.25rem",
-                color: "#e8f4fd",
+                color: "var(--ink)",
               }}
             >
-              Auto<span style={{ color: "#00d9ff" }}>Mind</span>
+              Auto<span style={{ color: "var(--bronze)" }}>Mind</span>
             </span>
           </div>
           <p

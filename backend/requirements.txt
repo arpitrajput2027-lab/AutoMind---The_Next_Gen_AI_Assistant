@@ -20,6 +20,9 @@ edge-tts==6.1.9
 # Sarvam AI (NEW)
 requests==2.31.0
 
+# LLM APIS
+google-genai>=1.0.0
+
 # Document Processing
 python-docx==1.1.0
 openpyxl==3.1.2

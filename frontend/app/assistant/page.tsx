@@ -3,8 +3,9 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { v4 as uuidv4 } from "uuid";
 import Link from "next/link";
-
 import dynamic from "next/dynamic";
+import { Settings, Trash2, Mail, TerminalSquare, AlertCircle, Bot } from "lucide-react";
+
 import ChatPanel, { type Message } from "@/components/assistant/ChatPanel";
 import ExecutionLog from "@/components/assistant/ExecutionLog";
 import ModelSelector from "@/components/assistant/ModelSelector";
@@ -27,13 +28,13 @@ export default function AssistantPage() {
   const [messages, setMessages]             = useState<Message[]>([]);
   const [steps, setSteps]                   = useState<ExecutionStep[]>([]);
   const [isThinking, setIsThinking]         = useState(false);
-  const [model, setModel]                   = useState("sarvam");
+  const [model, setModel]                   = useState("gemini");
   const [voiceMode, setVoiceMode]           = useState(false);
   const [aiMode, setAiMode]                 = useState<"edge" | "sarvam">("edge");
   const [emailPreview, setEmailPreview]     = useState<EmailPreview | null>(null);
   const [isPaused, setIsPaused]             = useState(false);
   const [isStopping, setIsStopping]         = useState(false);
-  const [showLog, setShowLog]               = useState(true);
+  const [showLog, setShowLog]               = useState(false);
   const stepsClearTimer                     = useRef<ReturnType<typeof setTimeout>>();
 
   const { avatarState, startTalking, startThinking, stopThinking, reactToTask } = useAvatar();
@@ -73,7 +74,7 @@ export default function AssistantPage() {
         },
       ]);
       startTalking(msg.message);
-      speak(msg.message);
+      if(voiceMode) speak(msg.message);
       reactToTask(msg.task_type || "chat", msg.success !== false);
 
       // Auto-clear steps after 8s
@@ -96,6 +97,13 @@ export default function AssistantPage() {
           success: false,
         },
       ]);
+    }
+
+    if (msg.type === "email_preview" && msg.preview) {
+        setIsThinking(false);
+        setIsStopping(false);
+        stopThinking();
+        setEmailPreview(msg.preview);
     }
 
     if (msg.type === "model_switched") {
@@ -131,7 +139,7 @@ export default function AssistantPage() {
 
     if (msg.type === "paused") setIsPaused(true);
     if (msg.type === "resumed") { setIsPaused(false); }
-  }, [startTalking, startThinking, stopThinking, reactToTask]);
+  }, [startTalking, startThinking, stopThinking, reactToTask, voiceMode, speak]);
 
   const handleStep = useCallback((step: ExecutionStep) => {
     setSteps((prev) => [...prev, step]);
@@ -181,7 +189,7 @@ export default function AssistantPage() {
 
   const handleStop = useCallback(() => {
     send({ type: "stop" });
-    setIsStopping(true);   // show "Stopping…" — buttons stay visible until "stopped" arrives
+    setIsStopping(true);
   }, [send]);
 
   const handlePauseResume = useCallback(() => {
@@ -194,177 +202,107 @@ export default function AssistantPage() {
     }
   }, [send, isPaused]);
 
-
-  const STATUS_COLOR = { connected: "#00ff88", connecting: "#ffbd2e", disconnected: "#ff4444", error: "#ff4444" };
-  const STATUS_LABEL = { connected: "Connected", connecting: "Connecting...", disconnected: "Offline", error: "Error" };
-
   return (
-    <div style={{
-      height: "100vh", display: "flex", flexDirection: "column",
-      background: "var(--bg-void)", overflow: "hidden",
-    }}>
-      {/* ── Top Bar ─────────────────────────────────────────────────────────── */}
-      <header style={{
-        height: "56px", flexShrink: 0,
-        display: "flex", alignItems: "center",
-        justifyContent: "space-between",
-        padding: "0 20px",
-        background: "rgba(3,7,13,0.95)",
-        borderBottom: "1px solid var(--border-subtle)",
-        backdropFilter: "blur(12px)",
-        zIndex: 10,
-      }}>
-        {/* Logo + back */}
-        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-          <Link href="/" style={{
-            textDecoration: "none", display: "flex",
-            alignItems: "center", gap: "8px",
-          }}>
-            <div style={{
-              width: "30px", height: "30px",
-              background: "linear-gradient(135deg,#00d9ff,#00ff88)",
-              borderRadius: "6px", display: "flex", alignItems: "center",
-              justifyContent: "center", fontSize: "14px", fontWeight: 800,
-              color: "#03070d", fontFamily: "var(--font-syne)",
-            }}>A</div>
-            <span style={{
-              fontFamily: "var(--font-syne)", fontWeight: 800,
-              fontSize: "1rem", color: "#e8f4fd",
-            }}>
-              Auto<span style={{ color: "#00d9ff" }}>Mind</span>
+    <div className="h-screen flex bg-cream overflow-hidden">
+      {/* ── Sidebar ─────────────────────────────────────────────────────────── */}
+      <aside className="w-64 bg-ink text-cream flex flex-col flex-shrink-0 z-10 border-r border-ink shadow-2xl">
+        <div className="p-6">
+          <Link href="/" className="flex items-center gap-3 no-underline">
+            <div className="w-8 h-8 bg-bronze rounded flex items-center justify-center font-bold text-cream font-serif text-xl shadow-sm">
+              A
+            </div>
+            <span className="font-serif font-bold text-xl tracking-wide text-cream">
+              Auto<span className="text-bronze">Mind</span>
             </span>
           </Link>
-
-          {/* WS Status */}
-          <div style={{
-            display: "flex", alignItems: "center", gap: "5px",
-            background: `${STATUS_COLOR[status]}10`,
-            border: `1px solid ${STATUS_COLOR[status]}25`,
-            borderRadius: "20px", padding: "3px 10px",
-          }}>
-            <div style={{
-              width: "5px", height: "5px", borderRadius: "50%",
-              background: STATUS_COLOR[status],
-              boxShadow: `0 0 6px ${STATUS_COLOR[status]}`,
-            }} />
-            <span style={{
-              fontFamily: "var(--font-mono)", fontSize: "0.65rem",
-              color: STATUS_COLOR[status],
-            }}>
-              {STATUS_LABEL[status]}
-            </span>
-          </div>
         </div>
 
-        {/* Model selector */}
-        <ModelSelector selected={model} onChange={handleModelChange} />
+        <nav className="flex-1 px-4 py-2 space-y-2">
+            <div className="label-mono mb-4 px-2 text-meta opacity-70">Workspace</div>
+            
+            <button 
+                onClick={() => setShowLog(!showLog)}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-md transition-colors label-mono ${showLog ? 'bg-cream/10 text-bronze' : 'text-muted hover:text-cream hover:bg-cream/5'}`}
+            >
+                <TerminalSquare size={16} />
+                Execution Log
+            </button>
+            <button 
+                onClick={() => { setMessages([]); setSteps([]); }}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md transition-colors label-mono text-muted hover:text-cream hover:bg-cream/5"
+            >
+                <Trash2 size={16} />
+                Clear Chat
+            </button>
+            
+            {/* Action Controls */}
+            {(isThinking || isStopping) && (
+                <div className="mt-8 pt-4 border-t border-cream/10 space-y-2">
+                    <div className="label-mono mb-4 px-2 text-meta opacity-70">Task Controls</div>
+                    {!isStopping && (
+                        <button
+                            onClick={handlePauseResume}
+                            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-md transition-colors label-mono ${isPaused ? 'bg-success/20 text-success' : 'bg-bronze/20 text-bronze hover:bg-bronze/30'}`}
+                        >
+                            {isPaused ? <TerminalSquare size={16} /> : <AlertCircle size={16} />}
+                            {isPaused ? "Resume" : "Pause"}
+                        </button>
+                    )}
+                    <button
+                        onClick={!isStopping ? handleStop : undefined}
+                        disabled={isStopping}
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-md transition-colors label-mono ${isStopping ? 'bg-red-500/10 text-red-400 opacity-70 cursor-not-allowed' : 'bg-red-500/20 text-red-400 hover:bg-red-500/30'}`}
+                    >
+                        <AlertCircle size={16} className={isStopping ? 'animate-spin' : ''} />
+                        {isStopping ? "Stopping..." : "Stop Task"}
+                    </button>
+                </div>
+            )}
+        </nav>
 
-        {/* Controls */}
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <button
-            onClick={() => setShowLog((s) => !s)}
-            style={{
-              padding: "6px 14px", borderRadius: "4px",
-              border: "1px solid var(--border-subtle)",
-              background: showLog ? "rgba(0,217,255,0.08)" : "transparent",
-              color: showLog ? "var(--cyan)" : "var(--text-muted)",
-              fontFamily: "var(--font-mono)", fontSize: "0.68rem",
-              cursor: "pointer", transition: "all 0.2s",
-            }}
-          >
-            {showLog ? "Hide Log" : "Show Log"}
-          </button>
-          {/* Stop / Pause — shown during execution OR while stopping */}
-          {(isThinking || isStopping) && (
-            <>
-              {/* Pause/Resume — only when not stopping */}
-              {!isStopping && (
-                <button
-                  onClick={handlePauseResume}
-                  style={{
-                    padding: "6px 14px", borderRadius: "4px",
-                    border: `1px solid ${isPaused ? "rgba(0,255,136,0.4)" : "rgba(255,189,46,0.4)"}`,
-                    background: isPaused ? "rgba(0,255,136,0.08)" : "rgba(255,189,46,0.08)",
-                    color: isPaused ? "#00ff88" : "#ffbd2e",
-                    fontFamily: "var(--font-mono)", fontSize: "0.68rem",
-                    cursor: "pointer", transition: "all 0.2s", display: "flex",
-                    alignItems: "center", gap: "5px",
-                  }}
-                >
-                  {isPaused ? (
-                    <><svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>Resume</>
-                  ) : (
-                    <><svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>Pause</>
-                  )}
-                </button>
-              )}
-              <button
-                onClick={!isStopping ? handleStop : undefined}
-                disabled={isStopping}
-                style={{
-                  padding: "6px 14px", borderRadius: "4px",
-                  border: "1px solid rgba(255,68,68,0.4)",
-                  background: isStopping ? "rgba(255,68,68,0.15)" : "rgba(255,68,68,0.08)",
-                  color: "#ff4444",
-                  fontFamily: "var(--font-mono)", fontSize: "0.68rem",
-                  cursor: isStopping ? "not-allowed" : "pointer",
-                  transition: "all 0.2s", display: "flex",
-                  alignItems: "center", gap: "5px",
-                  opacity: isStopping ? 0.7 : 1,
-                }}
-              >
-                {isStopping ? (
-                  <><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ animation: "spin 0.8s linear infinite" }}><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4"/></svg>Stopping…</>
-                ) : (
-                  <><svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>Stop</>
+        <div className="p-4 border-t border-cream/10 space-y-4">
+            <ModelSelector selected={model} onChange={handleModelChange} />
+            
+            <div className="flex items-center gap-2 justify-between px-2">
+                <div className="flex items-center gap-2">
+                    <div className={`w-2 h-2 rounded-full ${status === 'connected' ? 'bg-success shadow-[0_0_8px_rgba(95,115,80,0.8)]' : status === 'connecting' ? 'bg-bronze' : 'bg-red-500'}`} />
+                    <span className="label-mono text-xs opacity-70 capitalize">{status}</span>
+                </div>
+                <Bot size={16} className="text-muted" />
+            </div>
+        </div>
+      </aside>
+
+      {/* ── Main Canvas ─────────────────────────────────────────────────────── */}
+      <main className="flex-1 flex overflow-hidden bg-cream relative">
+        <div className="flex-1 flex flex-col w-full h-full p-6">
+            <div className="w-full h-full max-w-5xl mx-auto flex gap-6">
+                <div className="flex-1 min-w-0">
+                    <ChatPanel
+                        messages={messages}
+                        isThinking={isThinking}
+                        onSend={handleSend}
+                        voiceMode={voiceMode}
+                        onVoiceModeToggle={() => setVoiceMode((v) => !v)}
+                        aiMode={aiMode}
+                        onAiModeToggle={() => setAiMode((m) => m === "edge" ? "sarvam" : "edge")}
+                        sarvamSTTState={sarvamSTTState}
+                        onSarvamSTTToggle={toggleSarvamSTT}
+                    />
+                </div>
+
+                {/* Execution Log */}
+                {showLog && (
+                <div className="w-80 flex-shrink-0">
+                    <ExecutionLog steps={steps} isThinking={isThinking} />
+                </div>
                 )}
-              </button>
-            </>
-          )}
-
-          <button
-            onClick={() => { setMessages([]); setSteps([]); }}
-            style={{
-              padding: "6px 14px", borderRadius: "4px",
-              border: "1px solid var(--border-subtle)",
-              background: "transparent", color: "var(--text-muted)",
-              fontFamily: "var(--font-mono)", fontSize: "0.68rem",
-              cursor: "pointer", transition: "all 0.2s",
-            }}
-          >
-            Clear
-          </button>
+            </div>
         </div>
-      </header>
 
-      {/* ── Main layout ─────────────────────────────────────────────────────── */}
-      <div style={{
-        flex: 1, display: "grid", overflow: "hidden",
-        gridTemplateColumns: showLog ? "1fr 320px" : "1fr",
-        gap: "12px", padding: "12px",
-        transition: "grid-template-columns 0.35s ease",
-      }}>
-        {/* Chat Panel */}
-        <ChatPanel
-          messages={messages}
-          isThinking={isThinking}
-          onSend={handleSend}
-          voiceMode={voiceMode}
-          onVoiceModeToggle={() => setVoiceMode((v) => !v)}
-          aiMode={aiMode}
-          onAiModeToggle={() => setAiMode((m) => m === "edge" ? "sarvam" : "edge")}
-          sarvamSTTState={sarvamSTTState}
-          onSarvamSTTToggle={toggleSarvamSTT}
-        />
-
-        {/* Execution Log */}
-        {showLog && (
-          <ExecutionLog steps={steps} isThinking={isThinking} />
-        )}
-      </div>
-
-      {/* ── 3D Avatar (floating, draggable) ─────────────────────────────────── */}
+        {/* ── 3D Avatar (floating, draggable) ─────────────────────────────────── */}
         <AvatarWindow />
+      </main>
 
       {/* ── Email Preview Modal ──────────────────────────────────────────────── */}
       {emailPreview && (
@@ -374,8 +312,6 @@ export default function AssistantPage() {
           onCancel={() => setEmailPreview(null)}
         />
       )}
-
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }

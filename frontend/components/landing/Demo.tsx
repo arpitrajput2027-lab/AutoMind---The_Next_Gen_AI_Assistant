@@ -221,7 +221,7 @@ export default function Demo() {
                 : "linear-gradient(135deg, var(--cyan), #0099bb)",
               border: isRunning ? "1px solid var(--border-glow)" : "none",
               borderRadius: "8px",
-              color: isRunning ? "var(--cyan)" : "var(--bg-void)",
+              color: isRunning ? "var(--cyan)" : "var(--bg-cream)",
               fontFamily: "var(--font-syne)",
               fontWeight: 700,
               fontSize: "1rem",

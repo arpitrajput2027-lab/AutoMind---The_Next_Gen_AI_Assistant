@@ -177,7 +177,7 @@ function FeatureCard({
           marginBottom: "10px",
           lineHeight: 1.3,
           transition: "color 0.2s ease",
-          color: hovered ? "#00d9ff" : "#e8f4fd",
+          color: hovered ? "var(--cyan)" : "var(--ink)",
         }}
       >
         {feature.title}

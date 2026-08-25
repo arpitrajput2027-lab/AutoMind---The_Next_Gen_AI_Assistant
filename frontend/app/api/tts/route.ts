@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { exec } from "child_process";
+import { execFile } from "child_process";
 import { promisify } from "util";
 import path from "path";
 
-const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
 
 export async function POST(req: NextRequest) {
   try {
@@ -26,9 +26,10 @@ export async function POST(req: NextRequest) {
     // Python script ka path
     const scriptPath = path.join(process.cwd(), "tts.py");
 
-    // Python script run karo
-    const { stdout, stderr } = await execAsync(
-      `python "${scriptPath}" "${cleanText}"`,
+    // Python script run karo using execFile to prevent shell injection
+    const { stdout, stderr } = await execFileAsync(
+      "python",
+      [scriptPath, cleanText],
       { timeout: 30000 } // 30 second timeout
     );
 

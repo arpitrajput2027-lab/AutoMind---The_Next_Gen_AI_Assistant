@@ -10,15 +10,15 @@ function AvatarLoader() {
   return (
     <mesh>
       <boxGeometry args={[0.5, 0.5, 0.5]} />
-      <meshStandardMaterial color="#3B82F6" wireframe />
+      <meshStandardMaterial color="#8b6a3e" wireframe />
     </mesh>
   );
 }
 
 export default function AvatarWindow() {
   const [pos, setPos] = useState({
-    x: typeof window !== "undefined" ? window.innerWidth - 300 : 20,
-    y: typeof window !== "undefined" ? window.innerHeight - 360 : 20,
+    x: typeof window !== "undefined" ? window.innerWidth - 340 : 20,
+    y: typeof window !== "undefined" ? window.innerHeight - 400 : 20,
   });
 
   const dragging = useRef(false);
@@ -47,12 +47,12 @@ export default function AvatarWindow() {
 
   const borderColor =
     avatarState === "listening"
-      ? "#10B981"
+      ? "#ef4444" // red
       : avatarState === "thinking"
-      ? "#F59E0B"
+      ? "#8b6a3e" // bronze
       : avatarState === "speaking"
-      ? "#3B82F6"
-      : "#4B5563";
+      ? "#5f7350" // success green
+      : "rgba(26,24,20,0.1)"; // subtle ink
 
   const stateLabel =
     avatarState === "listening"
@@ -63,6 +63,15 @@ export default function AvatarWindow() {
       ? "● Speaking"
       : "● Idle";
 
+  const stateColor = 
+      avatarState === "listening"
+      ? "text-red-500"
+      : avatarState === "thinking"
+      ? "text-bronze"
+      : avatarState === "speaking"
+      ? "text-success"
+      : "text-muted";
+
   return (
     <div
       style={{
@@ -72,7 +81,9 @@ export default function AvatarWindow() {
         width: 320,
         height: 380,
         zIndex: 1000,
+        borderColor: borderColor
       }}
+      className="shadow-2xl rounded-xl overflow-hidden bg-cream border"
       onMouseMove={onMouseMove}
       onMouseUp={onMouseUp}
       onMouseLeave={onMouseUp}
@@ -80,69 +91,29 @@ export default function AvatarWindow() {
       {/* Header */}
       <div
         onMouseDown={onMouseDown}
-        style={{
-          background: "#111827",
-          borderRadius: "12px 12px 0 0",
-          padding: "8px 14px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          borderTop: `1.5px solid ${borderColor}`,
-          borderLeft: `1.5px solid ${borderColor}`,
-          borderRight: `1.5px solid ${borderColor}`,
-          borderBottom: "none",
-          cursor: "grab",
-          userSelect: "none",
-          transition: "border-color 0.3s",
-        }}
+        className="px-4 py-2 bg-parchment flex items-center justify-between cursor-grab select-none border-b border-black/5"
       >
-        <span style={{
-          color: "#F9FAFB",
-          fontSize: 13,
-          fontWeight: 600,
-          fontFamily: "sans-serif",
-        }}>
-          AutoMind
+        <span className="font-serif font-bold text-sm text-ink">
+          AutoMind Avatar
         </span>
-        <span style={{
-          color: borderColor,
-          fontSize: 11,
-          fontFamily: "sans-serif",
-          transition: "color 0.3s",
-        }}>
+        <span className={`label-mono text-[10px] transition-colors ${stateColor}`}>
           {stateLabel}
         </span>
       </div>
 
       {/* Canvas */}
-      <div
-        style={{
-          width: "100%",
-          height: "calc(100% - 36px)",
-          borderBottom: `1.5px solid ${borderColor}`,
-          borderLeft: `1.5px solid ${borderColor}`,
-          borderRight: `1.5px solid ${borderColor}`,
-          borderTop: "none",
-          borderRadius: "0 0 12px 12px",
-          overflow: "hidden",
-          background: "#0F172A",
-          transition: "border-color 0.3s",
-        }}
-      >
+      <div className="w-full h-[calc(100%-37px)] bg-white relative">
         <Canvas
            camera={{ position: [0, 1.5, 2.8], fov: 38 }}
-          // camera={{ position: [0, 0.1, 1.8], fov: 42 }}
-           // NAYI
-          //camera={{ position: [0, 1.6, 1.2], fov: 50 }}
-          style={{ width: "100%", height: "100%" }}
+           className="w-full h-full"
         >
-          <ambientLight intensity={0.7} />
-          <directionalLight position={[2, 4, 3]} intensity={1.2} />
-          <pointLight position={[-2, 3, 2]} intensity={0.5} color="#93C5FD" />
+          <ambientLight intensity={0.9} color="#faf8f4" />
+          <directionalLight position={[2, 4, 3]} intensity={1.2} color="#ffffff" />
+          <pointLight position={[-2, 3, 2]} intensity={0.5} color="#f4f0e8" />
 
           <Suspense fallback={<AvatarLoader />}>
             <Avatar3D />
-            <Environment preset="city" />
+            <Environment preset="studio" />
           </Suspense>
 
           <OrbitControls

@@ -160,7 +160,7 @@ export default function HowItWorks() {
                     background:
                       activeStep === i
                         ? `${step.color}20`
-                        : "rgba(255,255,255,0.03)",
+                        : "rgba(26, 24, 20, 0.04)",
                     border: `2px solid ${step.color}40`,
                     display: "flex",
                     alignItems: "center",
@@ -192,7 +192,7 @@ export default function HowItWorks() {
                   fontFamily: "var(--font-syne)",
                   fontWeight: 700,
                   fontSize: "1.1rem",
-                  color: activeStep === i ? step.color : "#e8f4fd",
+                  color: activeStep === i ? step.color : "var(--ink)",
                   marginBottom: "12px",
                   transition: "color 0.2s ease",
                 }}

@@ -206,7 +206,7 @@ export default function TechStack() {
                           fontFamily: "var(--font-syne)",
                           fontWeight: 600,
                           fontSize: "0.875rem",
-                          color: "#e8f4fd",
+                          color: "var(--ink)",
                           marginBottom: "2px",
                         }}
                       >
@@ -243,7 +243,7 @@ export default function TechStack() {
                 fontFamily: "var(--font-syne)",
                 fontWeight: 700,
                 fontSize: "1.6rem",
-                color: "#e8f4fd",
+                color: "var(--ink)",
                 marginBottom: "8px",
               }}
             >
@@ -270,7 +270,7 @@ export default function TechStack() {
                 display: "flex",
                 gap: "8px",
                 marginBottom: "28px",
-                background: "rgba(0,5,10,0.6)",
+                background: "var(--bg-parchment-light)",
                 padding: "4px",
                 borderRadius: "8px",
                 border: "1px solid var(--border-subtle)",
@@ -334,7 +334,7 @@ export default function TechStack() {
                         fontFamily: "var(--font-syne)",
                         fontWeight: 800,
                         fontSize: "1.3rem",
-                        color: "#e8f4fd",
+                        color: "var(--ink)",
                       }}
                     >
                       {selectedModel.name}
@@ -368,7 +368,7 @@ export default function TechStack() {
 
               <div
                 style={{
-                  background: "rgba(0,5,10,0.8)",
+                  background: "var(--bg-parchment-light)",
                   border: "1px solid var(--border-subtle)",
                   borderRadius: "8px",
                   padding: "20px",
@@ -414,7 +414,7 @@ export default function TechStack() {
                         style={{
                           fontFamily: "var(--font-mono)",
                           fontSize: "0.78rem",
-                          color: "#e8f4fd",
+                          color: "var(--ink)",
                           fontWeight: 500,
                         }}
                       >

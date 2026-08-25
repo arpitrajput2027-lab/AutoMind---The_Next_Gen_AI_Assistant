@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useVoice } from "@/hooks/useVoice";
+import { Mic } from "lucide-react";
 
 interface VoiceButtonProps {
   onTranscript: (text: string) => void;
@@ -26,33 +27,15 @@ export default function VoiceButton({ onTranscript, disabled }: VoiceButtonProps
       onClick={toggleListening}
       disabled={disabled}
       title={isListening ? "Stop listening" : "Start voice input"}
-      style={{
-        width: "40px", height: "40px",
-        borderRadius: "50%",
-        border: isListening
-          ? "1px solid rgba(255,107,53,0.6)"
-          : "1px solid var(--border-subtle)",
-        background: isListening ? "rgba(255,107,53,0.12)" : "transparent",
-        color: isListening ? "#ff6b35" : "var(--text-secondary)",
-        cursor: disabled ? "not-allowed" : "pointer",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        transition: "all 0.2s ease",
-        flexShrink: 0,
-        animation: isListening ? "glow-pulse 1.5s ease-in-out infinite" : "none",
-        boxShadow: isListening ? "0 0 16px rgba(255,107,53,0.3)" : "none",
-        opacity: disabled ? 0.4 : 1,
-      }}
+      className={`w-12 h-12 flex items-center justify-center rounded-lg transition-all flex-shrink-0 ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} ${isListening ? 'bg-red-50 text-red-500 shadow-[0_0_12px_rgba(239,68,68,0.3)] animate-pulse' : 'bg-parchment text-ink/60 hover:bg-black/5 hover:text-ink'}`}
     >
       {isListening ? (
-        /* Waveform bars while listening */
-        <div style={{ display: "flex", gap: "2px", alignItems: "center" }}>
+        <div className="flex gap-1 items-center">
           {[1, 2, 3].map((bar) => (
             <div
               key={bar}
+              className="w-1 bg-red-500 rounded-full"
               style={{
-                width: "3px",
-                background: "#ff6b35",
-                borderRadius: "2px",
                 animation: `wave-${bar} 0.6s ease-in-out infinite`,
                 animationDelay: `${bar * 0.1}s`,
               }}
@@ -60,12 +43,7 @@ export default function VoiceButton({ onTranscript, disabled }: VoiceButtonProps
           ))}
         </div>
       ) : (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
-          <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-          <line x1="12" y1="19" x2="12" y2="23"/>
-          <line x1="8" y1="23" x2="16" y2="23"/>
-        </svg>
+        <Mic size={18} />
       )}
 
       <style>{`

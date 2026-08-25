@@ -23,11 +23,11 @@ export default function Navbar() {
         zIndex: 50,
         transition: "all 0.4s ease",
         background: scrolled
-          ? "rgba(3, 7, 13, 0.92)"
+          ? "rgba(250, 248, 244, 0.92)"
           : "transparent",
         backdropFilter: scrolled ? "blur(20px)" : "none",
         borderBottom: scrolled
-          ? "1px solid rgba(0,217,255,0.08)"
+          ? "1px solid var(--border-subtle)"
           : "1px solid transparent",
       }}
     >
@@ -68,11 +68,11 @@ export default function Navbar() {
                 fontFamily: "var(--font-syne)",
                 fontWeight: "800",
                 fontSize: "1.25rem",
-                color: "#e8f4fd",
+                color: "var(--ink)",
                 letterSpacing: "-0.02em",
               }}
             >
-              Auto<span style={{ color: "#00d9ff" }}>Mind</span>
+              Auto<span style={{ color: "var(--bronze)" }}>Mind</span>
             </span>
           </div>
         </Link>
@@ -184,7 +184,7 @@ export default function Navbar() {
       {menuOpen && (
         <div
           style={{
-            background: "rgba(3,7,13,0.98)",
+            background: "var(--bg-parchment-light)",
             borderBottom: "1px solid var(--border-subtle)",
             padding: "1.5rem 2rem",
           }}

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import type { EmailPreview } from "@/hooks/useWebSocket";
+import { Mail, X, Check, Loader2, Send } from "lucide-react";
 
 interface EmailPreviewModalProps {
   preview: EmailPreview;
@@ -20,7 +21,6 @@ export default function EmailPreviewModal({
   const [visible, setVisible] = useState(false);
   const firstInputRef = useRef<HTMLInputElement>(null);
 
-  // Animate in + auto-focus
   useEffect(() => {
     const t = setTimeout(() => {
       setVisible(true);
@@ -29,7 +29,6 @@ export default function EmailPreviewModal({
     return () => clearTimeout(t);
   }, []);
 
-  // Close on Escape
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape") handleCancel();
@@ -56,251 +55,78 @@ export default function EmailPreviewModal({
 
   return (
     <>
-      {/* ── Global style injection ── */}
-      <style>{`
-        @keyframes ep-backdrop-in {
-          from { opacity: 0; }
-          to   { opacity: 1; }
-        }
-        @keyframes ep-modal-in {
-          from { opacity: 0; transform: translateY(28px) scale(0.96); }
-          to   { opacity: 1; transform: translateY(0)    scale(1);    }
-        }
-        @keyframes ep-modal-out {
-          from { opacity: 1; transform: translateY(0)    scale(1);    }
-          to   { opacity: 0; transform: translateY(16px) scale(0.97); }
-        }
-        @keyframes ep-sent-pop {
-          0%   { transform: scale(0.5); opacity: 0; }
-          60%  { transform: scale(1.2); opacity: 1; }
-          100% { transform: scale(1);   opacity: 1; }
-        }
-        .ep-field:focus {
-          border-color: rgba(0,217,255,0.55) !important;
-          box-shadow: 0 0 0 3px rgba(0,217,255,0.1);
-          outline: none;
-        }
-        .ep-btn-cancel:hover {
-          background: rgba(0,217,255,0.06) !important;
-          border-color: rgba(0,217,255,0.3) !important;
-          color: #e8f4fd !important;
-        }
-        .ep-btn-send:hover:not(:disabled) {
-          filter: brightness(1.15);
-          box-shadow: 0 0 22px rgba(0,217,255,0.4);
-          transform: translateY(-1px);
-        }
-        .ep-btn-send:active:not(:disabled) {
-          transform: translateY(0);
-        }
-      `}</style>
-
-      {/* ── Backdrop ── */}
       <div
         onClick={handleCancel}
-        style={{
-          position: "fixed",
-          inset: 0,
-          zIndex: 9998,
-          background: "rgba(3,7,13,0.82)",
-          backdropFilter: "blur(10px)",
-          WebkitBackdropFilter: "blur(10px)",
-          animation: "ep-backdrop-in 0.25s ease forwards",
-        }}
+        className={`fixed inset-0 z-[9998] bg-ink/40 backdrop-blur-sm transition-opacity duration-200 ${visible ? 'opacity-100' : 'opacity-0'}`}
       />
 
-      {/* ── Modal ── */}
       <div
         onClick={(e) => e.stopPropagation()}
-        style={{
-          position: "fixed",
-          inset: 0,
-          zIndex: 9999,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: "20px",
-          pointerEvents: "none",
-        }}
+        className="fixed inset-0 z-[9999] flex items-center justify-center p-4 pointer-events-none"
       >
         <div
-          style={{
-            width: "100%",
-            maxWidth: "580px",
-            background: "linear-gradient(160deg, #07111f 0%, #040c18 100%)",
-            border: "1px solid rgba(0,217,255,0.22)",
-            borderRadius: "16px",
-            boxShadow:
-              "0 0 0 1px rgba(0,217,255,0.06), 0 32px 80px rgba(0,0,0,0.7), 0 0 60px rgba(0,217,255,0.06)",
-            overflow: "hidden",
-            pointerEvents: "all",
-            animation: visible
-              ? "ep-modal-in 0.28s cubic-bezier(0.22,1,0.36,1) forwards"
-              : "ep-modal-out 0.22s ease forwards",
-          }}
+          className={`w-full max-w-lg bg-white border border-black/10 rounded-2xl shadow-2xl overflow-hidden pointer-events-auto transition-all duration-300 ${visible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-4 scale-95'}`}
         >
           {/* ── Header ── */}
-          <div
-            style={{
-              padding: "18px 22px 16px",
-              borderBottom: "1px solid rgba(0,217,255,0.09)",
-              background: "rgba(0,217,255,0.03)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-              {/* Icon */}
-              <div
-                style={{
-                  width: 38,
-                  height: 38,
-                  borderRadius: "10px",
-                  background: "rgba(0,217,255,0.1)",
-                  border: "1px solid rgba(0,217,255,0.2)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "1.1rem",
-                  flexShrink: 0,
-                }}
-              >
-                ✉️
+          <div className="px-6 py-5 border-b border-black/5 bg-cream flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-bronze/10 border border-bronze/20 text-bronze flex items-center justify-center">
+                <Mail size={20} />
               </div>
               <div>
-                <div
-                  style={{
-                    fontFamily: "'Syne', sans-serif",
-                    fontWeight: 700,
-                    fontSize: "0.95rem",
-                    color: "#e8f4fd",
-                    letterSpacing: "0.01em",
-                  }}
-                >
-                  Email Preview
-                </div>
-                <div
-                  style={{
-                    fontFamily: "'IBM Plex Mono', monospace",
-                    fontSize: "0.62rem",
-                    color: "rgba(0,217,255,0.55)",
-                    letterSpacing: "0.08em",
-                    marginTop: "2px",
-                  }}
-                >
+                <h2 className="heading-editorial text-lg text-ink m-0 leading-tight">Email Preview</h2>
+                <div className="label-mono text-[0.65rem] text-bronze mt-1">
                   REVIEW BEFORE SENDING
                 </div>
               </div>
             </div>
 
-            {/* Close button */}
             <button
               onClick={handleCancel}
-              style={{
-                width: 30,
-                height: 30,
-                borderRadius: "8px",
-                background: "rgba(255,255,255,0.04)",
-                border: "1px solid rgba(255,255,255,0.08)",
-                color: "#7fa8c9",
-                fontSize: "1rem",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                transition: "all 0.15s",
-                lineHeight: 1,
-              }}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,80,80,0.12)";
-                (e.currentTarget as HTMLButtonElement).style.color = "#ff6b6b";
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.04)";
-                (e.currentTarget as HTMLButtonElement).style.color = "#7fa8c9";
-              }}
+              className="w-8 h-8 flex items-center justify-center rounded-lg text-muted hover:bg-black/5 hover:text-ink transition-colors"
             >
-              ✕
+              <X size={18} />
             </button>
           </div>
 
           {/* ── Body ── */}
-          <div style={{ padding: "20px 22px", display: "flex", flexDirection: "column", gap: "14px" }}>
-
-            {/* From (read-only) */}
+          <div className="p-6 flex flex-col gap-5">
             <FieldRow label="From">
-              <div
-                style={{
-                  padding: "9px 13px",
-                  background: "rgba(0,217,255,0.03)",
-                  border: "1px solid rgba(0,217,255,0.08)",
-                  borderRadius: "8px",
-                  fontFamily: "'IBM Plex Mono', monospace",
-                  fontSize: "0.82rem",
-                  color: "#7fa8c9",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                }}
-              >
-                <span style={{ opacity: 0.5, fontSize: "0.7rem" }}>●</span>
+              <div className="px-4 py-2.5 bg-cream border border-black/5 rounded-lg font-mono text-sm text-ink/70 flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-bronze/50" />
                 {edited.from || "—"}
               </div>
             </FieldRow>
 
-            {/* To */}
             <FieldRow label="To">
               <input
                 ref={firstInputRef}
-                className="ep-field"
+                className="input-editorial w-full font-mono text-sm"
                 value={edited.to}
                 onChange={(e) => setEdited({ ...edited, to: e.target.value })}
                 placeholder="recipient@email.com"
-                style={fieldStyle}
               />
             </FieldRow>
 
-            {/* Subject */}
             <FieldRow label="Subject">
               <input
-                className="ep-field"
+                className="input-editorial w-full font-sans text-sm"
                 value={edited.subject}
                 onChange={(e) => setEdited({ ...edited, subject: e.target.value })}
                 placeholder="Email subject..."
-                style={fieldStyle}
               />
             </FieldRow>
 
-            {/* Body */}
             <FieldRow label="Body">
-              <div style={{ position: "relative" }}>
+              <div className="relative">
                 <textarea
-                  className="ep-field"
+                  className="input-editorial w-full font-sans text-sm min-h-[160px] pb-8 resize-y"
                   value={edited.body}
                   onChange={(e) => setEdited({ ...edited, body: e.target.value })}
                   rows={7}
                   placeholder="Email body..."
-                  style={{
-                    ...fieldStyle,
-                    resize: "vertical",
-                    lineHeight: 1.65,
-                    minHeight: "140px",
-                    paddingBottom: "28px",
-                  }}
                 />
-                {/* char counter */}
-                <span
-                  style={{
-                    position: "absolute",
-                    bottom: "8px",
-                    right: "10px",
-                    fontFamily: "'IBM Plex Mono', monospace",
-                    fontSize: "0.6rem",
-                    color: charCount > 1800 ? "#ff6b35" : "rgba(0,217,255,0.3)",
-                    pointerEvents: "none",
-                  }}
-                >
+                <span className={`absolute bottom-3 right-3 font-mono text-[0.65rem] ${charCount > 1800 ? 'text-red-500' : 'text-meta'}`}>
                   {charCount} chars
                 </span>
               </div>
@@ -308,89 +134,35 @@ export default function EmailPreviewModal({
           </div>
 
           {/* ── Footer ── */}
-          <div
-            style={{
-              padding: "14px 22px",
-              borderTop: "1px solid rgba(0,217,255,0.09)",
-              background: "rgba(0,0,0,0.2)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: "12px",
-            }}
-          >
-            {/* Hint */}
-            <span
-              style={{
-                fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: "0.6rem",
-                color: "rgba(0,217,255,0.3)",
-                letterSpacing: "0.05em",
-              }}
-            >
-              ESC to cancel
-            </span>
+          <div className="px-6 py-4 border-t border-black/5 bg-cream flex items-center justify-between">
+            <span className="label-mono text-meta">ESC to cancel</span>
 
-            <div style={{ display: "flex", gap: "10px" }}>
-              {/* Cancel */}
+            <div className="flex gap-3">
               <button
-                className="ep-btn-cancel"
                 onClick={handleCancel}
-                style={{
-                  padding: "9px 22px",
-                  borderRadius: "8px",
-                  border: "1px solid rgba(0,217,255,0.15)",
-                  background: "transparent",
-                  color: "#7fa8c9",
-                  fontFamily: "'Syne', sans-serif",
-                  fontWeight: 600,
-                  fontSize: "0.82rem",
-                  cursor: "pointer",
-                  transition: "all 0.15s",
-                  letterSpacing: "0.02em",
-                }}
+                className="btn-secondary"
               >
                 Discard
               </button>
 
-              {/* Send */}
               <button
-                className="ep-btn-send"
                 onClick={handleSend}
                 disabled={sending || sent}
-                style={{
-                  padding: "9px 26px",
-                  borderRadius: "8px",
-                  background: sent
-                    ? "linear-gradient(135deg, #00ff88, #00cc6a)"
-                    : "linear-gradient(135deg, #00d9ff, #0099cc)",
-                  border: "none",
-                  color: "#03070d",
-                  fontFamily: "'Syne', sans-serif",
-                  fontWeight: 700,
-                  fontSize: "0.82rem",
-                  cursor: sending || sent ? "default" : "pointer",
-                  transition: "all 0.2s",
-                  letterSpacing: "0.03em",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "7px",
-                  opacity: sending ? 0.8 : 1,
-                }}
+                className={`btn-primary min-w-[120px] ${sent ? 'bg-success border-success text-white' : ''}`}
               >
                 {sent ? (
                   <>
-                    <span style={{ animation: "ep-sent-pop 0.4s ease forwards" }}>✓</span>
+                    <Check size={16} className="animate-fade-up" />
                     Sent!
                   </>
                 ) : sending ? (
                   <>
-                    <SpinnerIcon />
+                    <Loader2 size={16} className="animate-spin" />
                     Sending…
                   </>
                 ) : (
                   <>
-                    <SendIcon />
+                    <Send size={16} />
                     Send Email
                   </>
                 )}
@@ -403,61 +175,13 @@ export default function EmailPreviewModal({
   );
 }
 
-// ── Sub-components ─────────────────────────────────────────────────────────
-
 function FieldRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label
-        style={{
-          fontFamily: "'IBM Plex Mono', monospace",
-          fontSize: "0.63rem",
-          color: "rgba(0,217,255,0.5)",
-          letterSpacing: "0.1em",
-          textTransform: "uppercase",
-          display: "block",
-          marginBottom: "6px",
-        }}
-      >
+      <label className="label-mono block mb-2 text-ink/60">
         {label}
       </label>
       {children}
     </div>
   );
 }
-
-function SendIcon() {
-  return (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <line x1="22" y1="2" x2="11" y2="13" />
-      <polygon points="22 2 15 22 11 13 2 9 22 2" />
-    </svg>
-  );
-}
-
-function SpinnerIcon() {
-  return (
-    <svg
-      width="13" height="13" viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"
-      style={{ animation: "spin 0.8s linear infinite" }}
-    >
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-      <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
-    </svg>
-  );
-}
-
-// ── Shared field style ─────────────────────────────────────────────────────
-
-const fieldStyle: React.CSSProperties = {
-  width: "100%",
-  padding: "9px 13px",
-  background: "rgba(0,5,15,0.6)",
-  border: "1px solid rgba(0,217,255,0.12)",
-  borderRadius: "8px",
-  color: "#e8f4fd",
-  fontFamily: "'IBM Plex Mono', monospace",
-  fontSize: "0.82rem",
-  transition: "border-color 0.2s, box-shadow 0.2s",
-};

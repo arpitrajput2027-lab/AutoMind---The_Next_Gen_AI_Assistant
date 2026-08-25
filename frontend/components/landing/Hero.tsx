@@ -71,7 +71,7 @@ export default function Hero() {
           width: "700px",
           height: "700px",
           background:
-            "radial-gradient(ellipse at center, rgba(0,217,255,0.07) 0%, transparent 65%)",
+            "radial-gradient(ellipse at center, rgba(139,106,62,0.08) 0%, transparent 65%)",
           pointerEvents: "none",
           zIndex: 0,
         }}
@@ -84,7 +84,7 @@ export default function Hero() {
           width: "400px",
           height: "400px",
           background:
-            "radial-gradient(ellipse at center, rgba(0,255,136,0.05) 0%, transparent 65%)",
+            "radial-gradient(ellipse at center, rgba(95,115,80,0.06) 0%, transparent 65%)",
           pointerEvents: "none",
           zIndex: 0,
         }}
@@ -115,7 +115,7 @@ export default function Hero() {
             marginBottom: "1.5rem",
           }}
         >
-          <span style={{ color: "#e8f4fd" }}>Your PC.</span>
+          <span style={{ color: "var(--ink)" }}>Your PC.</span>
           <br />
           <span className="text-gradient-cyan">Your Command.</span>
         </h1>
@@ -268,7 +268,7 @@ export default function Hero() {
             <div
               key={stat.label}
               style={{
-                background: "rgba(3,7,13,0.95)",
+                background: "var(--bg-parchment-light)",
                 padding: "20px 16px",
                 textAlign: "center",
               }}
