@@ -454,6 +454,9 @@ async def _read_file_for_preview(path: str) -> dict | None:
 
 async def _run_command(websocket: WebSocket, user_input: str):
     """Run process_query in thread pool and stream results — runs as background task."""
+    from core.session_state import clear_last_file
+    clear_last_file()
+    
     loop = asyncio.get_event_loop()
     try:
         response, logs = await loop.run_in_executor(None, process_query, user_input)
@@ -495,6 +498,12 @@ async def _run_command(websocket: WebSocket, user_input: str):
                     "body": e.body,
                     "from": "VENOM AI"
                 }
+            })
+            await websocket.send_json({
+                "type": "response",
+                "message": "Email preview ready",
+                "success": True,
+                "task_type": "email"
             })
         else:
             print(f"Command error: {e}")
@@ -591,9 +600,10 @@ async def _handle_websocket(websocket: WebSocket):
                 
                 # ── Email Confirm ─────────────────────────────────────────────
                 elif command_type == "email_confirm":
-                    to = data_json.get("to", "")
-                    subject = data_json.get("subject", "")
-                    body = data_json.get("body", "")
+                    preview_data = data_json.get("preview", {})
+                    to = preview_data.get("to", data_json.get("to", ""))
+                    subject = preview_data.get("subject", data_json.get("subject", ""))
+                    body = preview_data.get("body", data_json.get("body", ""))
                     from tools.email import send_email_direct
                     
                     def _send_email():

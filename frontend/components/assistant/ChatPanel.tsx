@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import VoiceButton from "./VoiceButton";
-import { Send, FileText, Globe, Code, File as FileIcon, Mic, Loader2, Volume2, VolumeX, Bot, Mail } from "lucide-react";
+import { Send, FileText, Globe, Code, File as FileIcon, Mic, Loader2, Volume2, VolumeX, Bot, Mail, X } from "lucide-react";
 
 export interface FileCard {
   path: string;
@@ -35,6 +35,7 @@ interface ChatPanelProps {
   messages: Message[];
   isThinking: boolean;
   onSend: (text: string) => void;
+  onStop?: () => void;
   voiceMode: boolean;
   onVoiceModeToggle: () => void;
   aiMode: "edge" | "sarvam";
@@ -47,6 +48,7 @@ export default function ChatPanel({
   messages,
   isThinking,
   onSend,
+  onStop,
   voiceMode,
   onVoiceModeToggle,
   aiMode,
@@ -178,6 +180,15 @@ export default function ChatPanel({
                 />
               ))}
             </div>
+            {onStop && (
+                <button
+                    onClick={onStop}
+                    title="Stop Task"
+                    className="mt-2 p-1.5 rounded bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-600 transition-colors border border-red-200 shadow-sm flex items-center gap-1 text-xs font-mono font-medium"
+                >
+                    <X size={14} /> Stop
+                </button>
+            )}
           </div>
         )}
 

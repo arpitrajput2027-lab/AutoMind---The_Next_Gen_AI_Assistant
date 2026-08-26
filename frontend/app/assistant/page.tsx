@@ -282,6 +282,7 @@ export default function AssistantPage() {
                         messages={messages}
                         isThinking={isThinking}
                         onSend={handleSend}
+                        onStop={!isStopping ? handleStop : undefined}
                         voiceMode={voiceMode}
                         onVoiceModeToggle={() => setVoiceMode((v) => !v)}
                         aiMode={aiMode}

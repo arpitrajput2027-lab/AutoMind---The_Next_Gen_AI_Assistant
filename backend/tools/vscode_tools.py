@@ -55,3 +55,7 @@ def generate_code(description, filename="generated_code.py", language="python"):
         print("VS Code open failed, file saved on Desktop")
 
     return f"Code generated and saved: {filename} ({len(code.splitlines())} lines)"
+
+def generate_html_website(description: str):
+    """Generate a single HTML website file and open it in VS Code"""
+    return generate_code(description, filename="index.html", language="html")

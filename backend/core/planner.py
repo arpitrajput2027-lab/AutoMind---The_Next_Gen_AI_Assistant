@@ -32,6 +32,12 @@ VALID_ACTIONS = {
     
     # Vision
     "analyze_screen", "capture_screen",
+    
+    # New additions
+    "write_in_notepad", "generate_html_website",
+    
+    # IoT
+    "turn_light_on", "turn_light_off", "turn_fan_on", "turn_fan_off",
 }
 
 # core/planner.py - normalize_parameters function mein yeh add karo
@@ -50,7 +56,7 @@ def normalize_parameters(action, params):
             params["times"] = params.pop("count")
     
     # ✅ FIX: generate_code parameter aliases
-    if action == "generate_code":
+    if action == "generate_code" or action == "generate_html_website":
         if "file_path" in params:
             params["filename"] = params.pop("file_path")
         if "file_name" in params:

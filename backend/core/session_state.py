@@ -25,6 +25,9 @@ def set_last_file(path: str):
 def get_last_file() -> str | None:
     return _state["last_file"]
 
+def clear_last_file():
+    _state["last_file"] = None
+
 def get_last_doc() -> str | None:
     return _state["last_doc"]
 

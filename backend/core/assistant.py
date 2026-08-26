@@ -81,10 +81,9 @@ WORD/NOTEPAD WRITING INSTRUCTIONS
 ═══════════════════════════════════════════════════════════
 
 For "open notepad and write [topic]":
-1. open_notepad()
-2. type_text(FULL_GENERATED_CONTENT)
+1. write_in_notepad(FULL_GENERATED_CONTENT)
    - Generate 150-300 words
-   - Proper paragraphs with \\n\\n between them
+   - Proper paragraphs with \n\n between them
    - Complete, well-structured content
 
 For "open word and write [topic]":
@@ -106,6 +105,7 @@ shutdown(), restart(), sleep(), lock_screen()
 
 # APPLICATIONS
 open_notepad(), open_word(), open_excel(), open_powerpoint()
+write_in_notepad(text)
 open_vscode(), open_chrome(), open_edge(), open_calculator()
 open_file_explorer(), open_settings(), open_paint()
 open_cmd(), open_terminal(), open_task_manager()
@@ -135,6 +135,10 @@ edit_file(path, instruction)                 ← apply free-form edit to existin
 
 # VISION
 capture_screen(), analyze_screen(context)
+
+# SMART HOME (IoT)
+turn_light_on(), turn_light_off()
+turn_fan_on(), turn_fan_off()
 
 ═══════════════════════════════════════════════════════════
 EDIT / UPDATE RULES (CRITICAL)
@@ -351,8 +355,7 @@ USER: "open notepad and write hello world"
 {
   "thought": "Interactive writing in notepad",
   "plan": [
-    {"action": "open_notepad", "parameters": {}},
-    {"action": "type_text", "parameters": {"text": "hello world"}}
+    {"action": "write_in_notepad", "parameters": {"text": "hello world"}}
   ],
   "final_response": "Typed 'hello world' in Notepad",
   "needs_clarification": false
@@ -381,9 +384,8 @@ USER: "open notepad and write about machine learning"
 {
   "thought": "Generate ML essay in notepad",
   "plan": [
-    {"action": "open_notepad", "parameters": {}},
     {
-      "action": "type_text",
+      "action": "write_in_notepad",
       "parameters": {
         "text": "Machine Learning: A Comprehensive Overview\\n\\nMachine Learning (ML) is a subset of artificial intelligence that enables computers to learn from data without being explicitly programmed. It has become a cornerstone of modern technology, powering everything from recommendation systems to autonomous vehicles.\\n\\nThere are three main types of machine learning: supervised learning, where models learn from labeled data; unsupervised learning, which finds patterns in unlabeled data; and reinforcement learning, where agents learn through trial and error.\\n\\nApplications of ML are widespread. In healthcare, ML algorithms diagnose diseases from medical images. In finance, they detect fraudulent transactions. In e-commerce, they personalize shopping experiences. The technology continues to evolve rapidly.\\n\\nHowever, ML also presents challenges including data privacy concerns, algorithmic bias, and the need for large datasets. As the field advances, addressing these issues becomes increasingly important for responsible AI development.\\n\\nThe future of machine learning looks promising with developments in deep learning, neural networks, and edge computing bringing ML capabilities to more devices and applications."
       }

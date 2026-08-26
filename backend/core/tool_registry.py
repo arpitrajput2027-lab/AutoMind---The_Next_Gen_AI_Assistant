@@ -9,7 +9,8 @@ from tools import (
     whatsapp_tools,
     vscode_tools,
     office_tools,
-    preview_tools
+    preview_tools,
+    iot_tools
 )
 from core.vision import capture_screen, analyze_screen_with_llm
 
@@ -33,6 +34,7 @@ TOOL_REGISTRY = {
     
     # ===== APPLICATIONS =====
     "open_notepad": app_tools.open_notepad,
+    "write_in_notepad": app_tools.write_in_notepad,
     "open_word": app_tools.open_word,
     "open_excel": app_tools.open_excel,
     "open_powerpoint": app_tools.open_powerpoint,
@@ -53,6 +55,7 @@ TOOL_REGISTRY = {
     
     # ===== VS CODE =====
     "generate_code": vscode_tools.generate_code,
+    "generate_html_website": vscode_tools.generate_html_website,
     "open_vscode_with_file": vscode_tools.open_vscode_with_file,
     
     # ===== OFFICE =====
@@ -75,6 +78,12 @@ TOOL_REGISTRY = {
     # ===== COMMUNICATION =====
     "send_whatsapp_message": whatsapp_tools.send_message,
     "send_email_with_preview": preview_tools.preview_and_send_email,
+    
+    # ===== IOT (SINRIC PRO) =====
+    "turn_light_on": iot_tools.turn_light_on,
+    "turn_light_off": iot_tools.turn_light_off,
+    "turn_fan_on": iot_tools.turn_fan_on,
+    "turn_fan_off": iot_tools.turn_fan_off,
     
     # ===== VISION =====
     "capture_screen": capture_screen,

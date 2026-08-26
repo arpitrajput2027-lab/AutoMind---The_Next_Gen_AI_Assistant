@@ -40,6 +40,9 @@ def execute_plan(steps):
             time.sleep(1.2)
 
         except Exception as e:
+            from tools.preview_tools import EmailPreviewException
+            if isinstance(e, EmailPreviewException):
+                raise  # Re-raise to be caught by the server for UI preview
             results.append(f"Error in {action}: {e}")
             time.sleep(0.5)
 

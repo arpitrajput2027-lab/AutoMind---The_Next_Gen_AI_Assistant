@@ -40,6 +40,27 @@ def open_notepad():
         _click_window_center(win, y_offset_ratio=0.55)   # click text area
     return "Notepad opened"
 
+def write_in_notepad(text: str):
+    """Opens Notepad and types the given text smoothly with stop checking."""
+    open_notepad()
+    time.sleep(1) # wait a bit before starting to type
+    from core import execution_control
+    
+    # Type chunk by chunk or character by character to allow cancellation
+    for char in text:
+        if execution_control.should_stop():
+            return "Stopped typing in Notepad."
+        while execution_control.is_paused():
+            time.sleep(0.1)
+            if execution_control.should_stop():
+                return "Stopped typing in Notepad."
+                
+        pyautogui.write(char)
+        time.sleep(0.02)
+        
+    return f"Wrote {len(text)} characters in Notepad."
+
+
 # def open_word():
 #     subprocess.Popen("start winword", shell=True)
 #     return "MS Word opened"
