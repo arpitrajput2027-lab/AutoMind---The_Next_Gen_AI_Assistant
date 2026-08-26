@@ -34,22 +34,19 @@ export default function Avatar3D() {
     // Kyunki model mein baked animations nahi hain, hum code se hila rahe hain
     if (group.current) {
       // Breathing effect (up and down slightly)
-      // Base position Y is -1.5 (half body), usme thoda sine wave add kiya
-      group.current.position.y = -1.5 + Math.sin(time * 2) * 0.015;
+      // Base position Y is -1.6
+      group.current.position.y = -1.6 + Math.sin(time * 2) * 0.015;
       
       // Slight head rotation (looking around naturally)
       let targetRotY = Math.sin(time * 0.5) * 0.03;
-      let targetRotX = Math.sin(time * 0.8) * 0.02;
 
-      // Agar soch raha hai (thinking), toh thoda upar dekhega
+      // Agar soch raha hai (thinking), toh thoda right dekhega
       if (avatarState === "thinking") {
-        targetRotX -= 0.15; // Look up
-        targetRotY += 0.1;  // Look slightly right
+        targetRotY += 0.15;  // Look slightly right
       }
 
-      // Smooth rotation apply karo
+      // Smooth rotation apply karo (Sirf Y axis par, X hataya taaki aage na jhuke)
       group.current.rotation.y = THREE.MathUtils.lerp(group.current.rotation.y, targetRotY, 0.05);
-      group.current.rotation.x = THREE.MathUtils.lerp(group.current.rotation.x, targetRotX, 0.05);
     }
 
     // 2. Lip sync — blend shapes update karo
@@ -61,10 +58,10 @@ export default function Avatar3D() {
         // "jawOpen" use karenge for main mouth movement
         if (dict["jawOpen"] !== undefined) {
           const currentJaw = mesh.morphTargetInfluences[dict["jawOpen"]];
-          // Amplitude ko map karo 0 se 1 ke beech (thoda boost kar diya * 1.2)
+          // Amplitude ko map karo 0 se 1 ke beech (multiplier reduce kiya taaki thoda kam khule)
           mesh.morphTargetInfluences[dict["jawOpen"]] = THREE.MathUtils.lerp(
             currentJaw,
-            Math.min(mouthAmplitude * 1.2, 1),
+            Math.min(mouthAmplitude * 0.6, 0.7),
             0.3
           );
         }
@@ -88,8 +85,8 @@ export default function Avatar3D() {
         object={scene}
         // Scale aur Position adjust kiya for Half-Body frame
         scale={2.5}
-        position={[0, -1.5, 1]} 
-        rotation={[0, 0, 0]}  // Agar face ulta ho toh rotation={[0, Math.PI, 0]} karna
+        position={[0, -1.8, 1.6]} 
+        rotation={[-0.2, 0, 0]}  // Agar face ulta ho toh rotation={[0, Math.PI, 0]} karna
       />
     </group>
   );

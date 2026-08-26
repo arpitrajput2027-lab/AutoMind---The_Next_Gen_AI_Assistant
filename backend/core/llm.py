@@ -18,7 +18,8 @@ _gemini_client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else Non
 # Groq API (not xAI Grok) -- uses OpenAI-compatible endpoint
 GROQ_LLM_URL = "https://api.groq.com/openai/v1/chat/completions"
 GROQ_MODEL = "openai/gpt-oss-120b"        # 120B param, available on Groq
-GEMINI_MODEL = "gemini-2.5-flash"
+# GEMINI_MODEL = "gemini-2.5-flash"
+GEMINI_MODEL = "gemini-3.6-flash"
 # GROK_MODEL = "openai/gpt-oss-120b"
 
 

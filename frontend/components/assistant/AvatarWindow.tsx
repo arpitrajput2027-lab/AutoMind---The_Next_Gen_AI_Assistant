@@ -17,8 +17,8 @@ function AvatarLoader() {
 
 export default function AvatarWindow() {
   const [pos, setPos] = useState({
-    x: typeof window !== "undefined" ? window.innerWidth - 340 : 20,
-    y: typeof window !== "undefined" ? window.innerHeight - 400 : 20,
+    x: 230, // just next to the sidebar
+    y: typeof window !== "undefined" ? window.innerHeight - 420 : 20,
   });
 
   const dragging = useRef(false);
@@ -102,18 +102,17 @@ export default function AvatarWindow() {
       </div>
 
       {/* Canvas */}
-      <div className="w-full h-[calc(100%-37px)] bg-white relative">
+      <div className="w-full h-[calc(100%-37px)] bg-stone-100 relative">
         <Canvas
            camera={{ position: [0, 1.5, 2.8], fov: 38 }}
            className="w-full h-full"
         >
-          <ambientLight intensity={0.9} color="#faf8f4" />
-          <directionalLight position={[2, 4, 3]} intensity={1.2} color="#ffffff" />
-          <pointLight position={[-2, 3, 2]} intensity={0.5} color="#f4f0e8" />
+          <ambientLight intensity={0.75} color="#faf8f4" />
+          <directionalLight position={[2, 4, 3]} intensity={1.0} color="#ffffff" />
+          <pointLight position={[-2, 3, 2]} intensity={0.4} color="#f4f0e8" />
 
           <Suspense fallback={<AvatarLoader />}>
             <Avatar3D />
-            <Environment preset="studio" />
           </Suspense>
 
           <OrbitControls
