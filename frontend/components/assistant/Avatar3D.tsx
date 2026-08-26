@@ -2,7 +2,7 @@
 
 import { useRef, useEffect } from "react";
 import { useFrame } from "@react-three/fiber";
-import { useGLTF, useAnimations } from "@react-three/drei";
+import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 import { useAvatarStore } from "@/store/avatarStore";
 
@@ -10,125 +10,89 @@ const AVATAR_URL = "/models/avatar.glb";
 
 export default function Avatar3D() {
   const group = useRef<THREE.Group>(null);
-  const { scene, animations } = useGLTF(AVATAR_URL);
-  const { actions, mixer } = useAnimations(animations, group);
+  const { scene } = useGLTF(AVATAR_URL);
 
   const avatarState = useAvatarStore((s) => s.avatarState);
   const mouthAmplitude = useAvatarStore((s) => s.mouthAmplitude);
 
-  // Available blend shapes aur animations console mein print karo
+  // Available blend shapes console mein print karo (for debugging)
   useEffect(() => {
-    console.log("=== AVATAR ANIMATIONS ===");
-    console.log(animations.map((a) => a.name));
-
     scene.traverse((node) => {
       const mesh = node as THREE.Mesh;
       if (mesh.morphTargetDictionary) {
-        console.log("=== BLEND SHAPES ===");
+        console.log("=== BLEND SHAPES for", mesh.name, "===");
         console.log(Object.keys(mesh.morphTargetDictionary));
       }
     });
-  }, [scene, animations]);
+  }, [scene]);
 
-  // Animation play karo — jo bhi available ho
-  useEffect(() => {
-    if (!actions) return;
-    const keys = Object.keys(actions);
-    console.log("Actions available:", keys);
+  // Har frame mein procedural movement aur lip-sync
+  useFrame((state, delta) => {
+    const time = state.clock.getElapsedTime();
 
-    if (keys.length === 0) {
-      console.log("Koi animation nahi mili — static avatar rahega");
-      return;
-    }
-
-    // Pehli available animation play karo
-    const firstAction = actions[keys[0]];
-    firstAction?.reset().fadeIn(0.5).play();
-  }, [actions]);
-
-  // State change hone pe animation change karo
-  useEffect(() => {
-    if (!actions) return;
-    const keys = Object.keys(actions);
-    if (keys.length === 0) return;
-
-    // Sab band karo
-    Object.values(actions).forEach((a) => a?.fadeOut(0.3));
-
-    // State ke hisaab se animation choose karo
-    // Sketchfab avatars mein alag names hote hain
-    let action;
-
-    if (avatarState === "speaking" || avatarState === "listening") {
-      // Koi bhi animation — jo bhi available ho
-      action =
-        actions["Talk"] ??
-        actions["Speaking"] ??
-        actions["Idle"] ??
-        actions[keys[0]];
-    } else if (avatarState === "thinking") {
-      action =
-        actions["Think"] ??
-        actions["Thinking"] ??
-        actions["Idle"] ??
-        actions[keys[0]];
-    } else {
-      // Idle
-      action =
-        actions["Idle"] ??
-        actions["idle"] ??
-        actions["Stand"] ??
-        actions[keys[0]];
-    }
-
-    action?.reset().fadeIn(0.3).play();
-  }, [avatarState]);
-
-  // Har frame mein
-  useFrame((_, delta) => {
-    mixer?.update(delta);
-
-    // Subtle head movement
+    // 1. Subtle procedural movement (breathing & head movement)
+    // Kyunki model mein baked animations nahi hain, hum code se hila rahe hain
     if (group.current) {
-      group.current.rotation.y =
-        Math.sin(Date.now() * 0.0008) * 0.04;
+      // Breathing effect (up and down slightly)
+      // Base position Y is -1.5 (half body), usme thoda sine wave add kiya
+      group.current.position.y = -1.5 + Math.sin(time * 2) * 0.015;
+      
+      // Slight head rotation (looking around naturally)
+      let targetRotY = Math.sin(time * 0.5) * 0.03;
+      let targetRotX = Math.sin(time * 0.8) * 0.02;
+
+      // Agar soch raha hai (thinking), toh thoda upar dekhega
+      if (avatarState === "thinking") {
+        targetRotX -= 0.15; // Look up
+        targetRotY += 0.1;  // Look slightly right
+      }
+
+      // Smooth rotation apply karo
+      group.current.rotation.y = THREE.MathUtils.lerp(group.current.rotation.y, targetRotY, 0.05);
+      group.current.rotation.x = THREE.MathUtils.lerp(group.current.rotation.x, targetRotX, 0.05);
     }
 
-    // Lip sync — blend shapes update karo
+    // 2. Lip sync — blend shapes update karo
     scene.traverse((node) => {
       const mesh = node as THREE.Mesh;
       if (mesh.morphTargetDictionary && mesh.morphTargetInfluences) {
         const dict = mesh.morphTargetDictionary;
 
-        // Mouth open keys — bahut saare names try karo
-        const mouthKeys = [
-          "mouthOpen", "jawOpen", "viseme_aa", "viseme_O",
-          "Mouth_Open", "mouth_open", "open_mouth",
-          "A", "aa", "jawDrop",
-        ];
+        // "jawOpen" use karenge for main mouth movement
+        if (dict["jawOpen"] !== undefined) {
+          const currentJaw = mesh.morphTargetInfluences[dict["jawOpen"]];
+          // Amplitude ko map karo 0 se 1 ke beech (thoda boost kar diya * 1.2)
+          mesh.morphTargetInfluences[dict["jawOpen"]] = THREE.MathUtils.lerp(
+            currentJaw,
+            Math.min(mouthAmplitude * 1.2, 1),
+            0.3
+          );
+        }
 
-        for (const key of mouthKeys) {
-          if (dict[key] !== undefined) {
-            const current = mesh.morphTargetInfluences[dict[key]];
-            mesh.morphTargetInfluences[dict[key]] =
-              THREE.MathUtils.lerp(current, mouthAmplitude, 0.3);
-            break;
-          }
+        // Thoda "mouthFunnel" bhi add kar sakte hain shape ke liye jab bol raha ho
+        if (dict["mouthFunnel"] !== undefined) {
+          const currentFunnel = mesh.morphTargetInfluences[dict["mouthFunnel"]];
+          mesh.morphTargetInfluences[dict["mouthFunnel"]] = THREE.MathUtils.lerp(
+            currentFunnel,
+            Math.min(mouthAmplitude * 0.5, 0.5),
+            0.3
+          );
         }
       }
     });
   });
 
   return (
-  <group ref={group}>
-    <primitive
-      object={scene}
-      scale={5}
-      position={[0, -0.5, 0]}
-      rotation={[0, Math.PI, 0]}  // ← 180 degree rotate — face saamne aayega
-    />
-  </group>
-);
+    <group ref={group}>
+      <primitive
+        object={scene}
+        // Scale aur Position adjust kiya for Half-Body frame
+        scale={2.5}
+        position={[0, -1.5, 1]} 
+        rotation={[0, 0, 0]}  // Agar face ulta ho toh rotation={[0, Math.PI, 0]} karna
+      />
+    </group>
+  );
 }
 
 useGLTF.preload(AVATAR_URL);
