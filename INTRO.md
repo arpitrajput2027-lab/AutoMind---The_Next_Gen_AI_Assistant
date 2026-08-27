@@ -5,11 +5,11 @@
 Build a beautiful portfolio website for a software engineer with a dark theme for Student Name : Arpit Rajput for targeting Role GenAI Engineer Role
 
 
-Draft an email to 
+Send an email to 
 arpit.rajput.2028@gmail.com
  asking for the Project Report because we have a meeting today with foreign clients and US-based investors.
 
-Open Notepad and write a 5-paragraph essay about the history of Artificial Intelligence
+Open Notepad and write a essay about the history of Artificial Intelligence under 100 words.
 
 
 
