@@ -1,6 +1,6 @@
 # AutoMind VENOM X / VENOM AI
 
-#### Testing Promts 
+#### Testing Promts..
 
 Build a beautiful portfolio website for a software engineer with a dark theme for Student Name : Arpit Rajput for targeting Role GenAI Engineer Role
 
