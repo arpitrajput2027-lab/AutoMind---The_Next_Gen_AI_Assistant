@@ -3,6 +3,27 @@
 import { useCallback, useRef } from "react";
 import { useAvatarStore } from "@/store/avatarStore";
 
+function speakWithBrowser(text: string, onStart: () => void, onEnd: () => void) {
+  if (typeof window === "undefined" || !window.speechSynthesis) {
+    throw new Error("Browser speech not available");
+  }
+  window.speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.rate = 1;
+  utter.pitch = 1;
+  // Prefer an English/Indian voice if present
+  const voices = window.speechSynthesis.getVoices();
+  const preferred =
+    voices.find((v) => /en-IN/i.test(v.lang)) ||
+    voices.find((v) => /en-US|en-GB/i.test(v.lang)) ||
+    voices[0];
+  if (preferred) utter.voice = preferred;
+  utter.onstart = onStart;
+  utter.onend = onEnd;
+  utter.onerror = onEnd;
+  window.speechSynthesis.speak(utter);
+}
+
 export function useTTS() {
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
@@ -11,27 +32,20 @@ export function useTTS() {
   const setAvatarState = useAvatarStore((s) => s.setAvatarState);
   const setMouthAmplitude = useAvatarStore((s) => s.setMouthAmplitude);
 
-  // Lip sync loop — audio amplitude se mouth drive karo
   const startLipSync = useCallback((analyser: AnalyserNode) => {
     const dataArray = new Uint8Array(analyser.frequencyBinCount);
 
     const loop = () => {
       analyser.getByteFrequencyData(dataArray);
-
-      // Average amplitude nikalo
       const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
-
-      // 0-1 range mein normalize karo
       const normalized = Math.min(avg / 80, 1);
       setMouthAmplitude(normalized);
-
       animationFrameRef.current = requestAnimationFrame(loop);
     };
 
     loop();
   }, [setMouthAmplitude]);
 
-  // Lip sync band karo
   const stopLipSync = useCallback(() => {
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
@@ -40,14 +54,32 @@ export function useTTS() {
     setMouthAmplitude(0);
   }, [setMouthAmplitude]);
 
-  // Main TTS function
+  const speakBrowserFallback = useCallback((text: string) => {
+    setAvatarState("speaking");
+    // Fake gentle mouth motion for browser TTS (no analyser)
+    let t = 0;
+    const tick = () => {
+      t += 1;
+      setMouthAmplitude(0.25 + Math.abs(Math.sin(t / 4)) * 0.45);
+      animationFrameRef.current = requestAnimationFrame(tick);
+    };
+    tick();
+    speakWithBrowser(
+      text,
+      () => setAvatarState("speaking"),
+      () => {
+        stopLipSync();
+        setAvatarState("idle");
+      }
+    );
+  }, [setAvatarState, setMouthAmplitude, stopLipSync]);
+
   const speak = useCallback(async (text: string) => {
     if (!text.trim()) return;
 
     try {
       setAvatarState("speaking");
 
-      // TTS API call karo
       const res = await fetch("/api/tts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -59,51 +91,45 @@ export function useTTS() {
       const { audio } = await res.json();
       if (!audio) throw new Error("Audio nahi mila");
 
-      // Base64 → ArrayBuffer convert karo
       const binaryStr = atob(audio);
       const bytes = new Uint8Array(binaryStr.length);
       for (let i = 0; i < binaryStr.length; i++) {
         bytes[i] = binaryStr.charCodeAt(i);
       }
 
-      // Web Audio API setup karo
       const audioContext = new AudioContext();
       audioContextRef.current = audioContext;
 
-      // Audio decode karo
       const audioBuffer = await audioContext.decodeAudioData(bytes.buffer);
 
-      // Analyser node — lip sync ke liye
       const analyser = audioContext.createAnalyser();
       analyser.fftSize = 256;
       analyserRef.current = analyser;
 
-      // Source → Analyser → Output
       const source = audioContext.createBufferSource();
       source.buffer = audioBuffer;
       source.connect(analyser);
       analyser.connect(audioContext.destination);
 
-      // Lip sync shuru karo
       startLipSync(analyser);
-
-      // Audio play karo
       source.start(0);
 
-      // Audio khatam hone pe
       source.onended = () => {
         stopLipSync();
         setAvatarState("idle");
         audioContext.close();
-        console.log("Audio khatam hua");
       };
-
     } catch (error) {
-      console.error("TTS Error:", error);
-      stopLipSync();
-      setAvatarState("idle");
+      console.warn("Edge TTS failed, using browser voice:", error);
+      try {
+        speakBrowserFallback(text);
+      } catch (fallbackErr) {
+        console.error("TTS Error:", fallbackErr);
+        stopLipSync();
+        setAvatarState("idle");
+      }
     }
-  }, [setAvatarState, startLipSync, stopLipSync]);
+  }, [setAvatarState, startLipSync, stopLipSync, speakBrowserFallback]);
 
   return { speak };
 }

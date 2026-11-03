@@ -23,34 +23,37 @@ export async function POST(req: NextRequest) {
       .trim()
       .substring(0, 500); // Max 500 characters
 
-    // Python script ka path
+    // Prefer project venv Python (has upgraded edge-tts), fall back to system python
     const scriptPath = path.join(process.cwd(), "tts.py");
+    const venvPython = path.join(process.cwd(), "..", "backend", "venv", "Scripts", "python.exe");
+    const pythonBin = process.env.TTS_PYTHON || venvPython;
+    const pythonCandidates = [pythonBin, "python"];
 
-    // Python script run karo using execFile to prevent shell injection
-    const { stdout, stderr } = await execFileAsync(
-      "python",
-      [scriptPath, cleanText],
-      { timeout: 30000 } // 30 second timeout
-    );
+    let stdout = "";
+    let lastErr: unknown = null;
+    for (const bin of pythonCandidates) {
+      try {
+        const result = await execFileAsync(bin, [scriptPath, cleanText], {
+          timeout: 45000,
+          windowsHide: true,
+        });
+        stdout = result.stdout;
+        if (stdout?.trim()) break;
+        lastErr = result.stderr || "empty audio";
+      } catch (err) {
+        lastErr = err;
+      }
+    }
 
-    if (stderr && !stdout) {
-      console.error("TTS Python Error:", stderr);
+    if (!stdout?.trim()) {
+      console.error("TTS Python Error:", lastErr);
       return NextResponse.json(
         { error: "TTS generate nahi hua" },
         { status: 500 }
       );
     }
 
-    const audioBase64 = stdout.trim();
-
-    if (!audioBase64) {
-      return NextResponse.json(
-        { error: "Audio empty aaya" },
-        { status: 500 }
-      );
-    }
-
-    return NextResponse.json({ audio: audioBase64 });
+    return NextResponse.json({ audio: stdout.trim() });
 
   } catch (error) {
     console.error("TTS Route Error:", error);

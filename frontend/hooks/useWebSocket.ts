@@ -24,6 +24,21 @@ export interface FilePreview {
   file_type: "html" | "code" | "text" | "docx";
 }
 
+export interface WebSource {
+  title: string;
+  snippet: string;
+  url: string;
+}
+
+export interface RoleInfo {
+  id: string;
+  name: string;
+  emoji: string;
+  description: string;
+  color: string;
+  is_custom?: boolean;
+}
+
 export interface WsMessage {
   type: string;
   message?: string;
@@ -35,6 +50,10 @@ export interface WsMessage {
   session_id?: string;
   model?: string;
   success?: boolean;
+  sources?: WebSource[];
+  role?: RoleInfo;
+  roles?: RoleInfo[];
+  active?: RoleInfo;
 }
 
 interface UseWebSocketOptions {
@@ -133,10 +152,22 @@ export function useWebSocket({
     [send]
   );
 
+  const switchRole = useCallback(
+    (roleId: string, customName?: string, customPrompt?: string) => {
+      send({
+        type: "switch_role",
+        role_id: roleId,
+        custom_name: customName,
+        custom_prompt: customPrompt,
+      });
+    },
+    [send]
+  );
+
   useEffect(() => {
     connect();
     return () => disconnect();
   }, [connect, disconnect]);
 
-  return { status, send, sendCommand, switchModel, confirmEmail };
+  return { status, send, sendCommand, switchModel, confirmEmail, switchRole };
 }

@@ -3,12 +3,18 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import VoiceButton from "./VoiceButton";
-import { Send, FileText, Globe, Code, File as FileIcon, Mic, Loader2, Volume2, VolumeX, Bot, Mail, X } from "lucide-react";
+import { Send, FileText, Globe, Code, File as FileIcon, Mic, Loader2, Volume2, VolumeX, Bot, Mail, X, ExternalLink, Search } from "lucide-react";
 
 export interface FileCard {
   path: string;
   name: string;
   file_type: "html" | "code" | "text" | "docx";
+}
+
+export interface WebSource {
+  title: string;
+  snippet: string;
+  url: string;
 }
 
 export interface Message {
@@ -19,12 +25,13 @@ export interface Message {
   timestamp: number;
   success?: boolean;
   fileCard?: FileCard;
+  sources?: WebSource[];
 }
 
 const QUICK_COMMANDS = [
   { label: "Write Python code", icon: <Code size={18} /> },
   { label: "Draft an email", icon: <MailIcon size={18} /> },
-  { label: "Send a WhatsApp message", icon: <MessageIcon size={18} /> },
+  { label: "Search latest AI news", icon: <Search size={18} /> },
   { label: "Create a PowerPoint", icon: <FileText size={18} /> },
 ];
 
@@ -42,6 +49,7 @@ interface ChatPanelProps {
   onAiModeToggle: () => void;
   sarvamSTTState: "idle" | "recording" | "processing" | "error";
   onSarvamSTTToggle: () => void;
+  activeRoleLabel?: string;
 }
 
 export default function ChatPanel({
@@ -55,6 +63,7 @@ export default function ChatPanel({
   onAiModeToggle,
   sarvamSTTState,
   onSarvamSTTToggle,
+  activeRoleLabel,
 }: ChatPanelProps) {
   const [input, setInput] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -81,6 +90,14 @@ export default function ChatPanel({
 
   return (
     <div className="h-full flex flex-col bg-white border border-black/10 rounded-xl shadow-soft overflow-hidden relative">
+      {/* Role indicator header */}
+      {activeRoleLabel && (
+        <div className="px-5 py-2.5 border-b border-black/5 bg-parchment-light/50 flex items-center justify-between">
+          <span className="label-mono text-[0.65rem] text-muted">Chatting as</span>
+          <span className="font-sans text-sm font-medium text-ink">{activeRoleLabel}</span>
+        </div>
+      )}
+
       {/* Messages area */}
       <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-6">
         
@@ -89,7 +106,7 @@ export default function ChatPanel({
           <div className="flex-1 flex flex-col items-center justify-center gap-8 py-10">
             <div className="text-center space-y-3">
               <h1 className="heading-editorial text-3xl">What can I do for you?</h1>
-              <p className="text-muted font-sans text-sm">Select a quick command or type your own</p>
+              <p className="text-muted font-sans text-sm">Pick a role on the right, or type a command</p>
             </div>
 
             <div className="grid grid-cols-2 gap-4 w-full max-w-lg">
@@ -109,6 +126,13 @@ export default function ChatPanel({
 
         {/* Messages */}
         {messages.map((msg) => (
+          msg.role === "system" ? (
+            <div key={msg.id} className="flex justify-center animate-fade-up">
+              <div className="px-4 py-2 rounded-full bg-bronze/10 border border-bronze/20 font-sans text-xs text-bronze text-center max-w-[90%]">
+                {msg.content}
+              </div>
+            </div>
+          ) : (
           <div
             key={msg.id}
             className={`flex gap-4 items-start animate-fade-up ${msg.role === "user" ? "flex-row-reverse" : "flex-row"}`}
@@ -124,8 +148,13 @@ export default function ChatPanel({
               {/* Task type badge */}
               {msg.taskType && msg.taskType !== "chat" && (
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="label-mono text-[0.65rem] text-bronze px-2 py-0.5 bg-bronze/10 rounded-sm">
-                    {msg.taskType}
+                  <span className={`label-mono text-[0.65rem] px-2 py-0.5 rounded-sm inline-flex items-center gap-1 ${
+                    msg.taskType === "web_search"
+                      ? "text-cyan bg-cyan-dim"
+                      : "text-bronze bg-bronze/10"
+                  }`}>
+                    {msg.taskType === "web_search" && <Search size={10} />}
+                    {msg.taskType === "web_search" ? "live web search" : msg.taskType}
                   </span>
                 </div>
               )}
@@ -133,6 +162,36 @@ export default function ChatPanel({
               <div className="font-sans text-[0.9rem] text-ink whitespace-pre-wrap leading-relaxed">
                 {msg.content}
               </div>
+
+              {/* Web search sources */}
+              {msg.sources && msg.sources.length > 0 && (
+                <div className="mt-3 space-y-2">
+                  <div className="label-mono text-[0.6rem] text-muted">Sources</div>
+                  {msg.sources.slice(0, 4).map((src, i) => (
+                    <a
+                      key={`${msg.id}-src-${i}`}
+                      href={src.url || undefined}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`block p-2.5 rounded-lg border border-black/8 bg-cream/80 hover:border-bronze/40 transition-colors ${
+                        src.url ? "cursor-pointer" : "cursor-default"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <span className="font-sans text-xs font-medium text-ink line-clamp-1">
+                          {src.title || "Source"}
+                        </span>
+                        {src.url && <ExternalLink size={12} className="text-muted flex-shrink-0 mt-0.5" />}
+                      </div>
+                      {src.snippet && (
+                        <p className="mt-1 font-sans text-[0.7rem] text-muted line-clamp-2 leading-snug">
+                          {src.snippet}
+                        </p>
+                      )}
+                    </a>
+                  ))}
+                </div>
+              )}
 
               {/* File card */}
               {msg.fileCard && (
@@ -163,6 +222,7 @@ export default function ChatPanel({
               </div>
             </div>
           </div>
+          )
         ))}
 
         {/* Thinking indicator */}

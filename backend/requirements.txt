@@ -15,7 +15,7 @@ pydub==0.25.1
 
 # Speech (Legacy - Backup)
 # openai-whisper==20231117
-edge-tts==6.1.9
+edge-tts>=7.3.1
 
 # Sarvam AI (NEW)
 requests==2.31.0
@@ -34,6 +34,7 @@ secure-smtplib==0.1.1
 # Web
 beautifulsoup4==4.12.2
 selenium==4.15.2
+ddgs>=9.0.0
 
 # Environment
 python-dotenv==1.0.0

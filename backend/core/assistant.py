@@ -8,8 +8,16 @@ from core.planner import plan_tasks
 from core.executor import execute_plan
 from core.interaction import interaction_manager
 from core.session_state import get_context_summary, get_last_file
+from core.roles import get_role_prompt_addon, get_active_role
 from config import INTERACTIVE_MODE, MAX_INTERACTION_DEPTH
 from core.content_generator import generate_essay
+
+# Last web search sources attached to the most recent response (read by server)
+_last_response_meta = {"sources": [], "task_type": "action"}
+
+
+def get_last_response_meta():
+    return _last_response_meta
 
 def extract_json(text):
     """Extract JSON from LLM response"""
@@ -119,8 +127,9 @@ create_formatted_word(path, content, style)
 create_powerpoint(path, slides_data)
 
 # WEB & SEARCH
-youtube_search(query)
-google_search(query)
+web_search(query)          ← REAL-TIME search: fetches live results & answers from them
+youtube_search(query)      ← opens YouTube video in browser
+google_search(query)       ← opens Google in browser (visual only, no answer)
 
 # COMMUNICATION
 send_whatsapp_message(contact, message)
@@ -198,11 +207,16 @@ ANSWER DIRECTLY (no tools):
   • General knowledge, history
   • "What is", "How to", "Explain"
 
-USE google_search ONLY for:
-  • Latest news, current events
-  • Live data (stocks, weather, sports)
-  • Real-time information
-  • "today", "current", "latest"
+USE web_search for (PREFERRED for live info):
+  • Latest news, current events, "what happened"
+  • Live data (stocks, weather, sports scores)
+  • Real-time / "today" / "current" / "latest" questions
+  • Anything that needs up-to-date facts from the internet
+  → Put web_search(query) FIRST in the plan. final_response can be a short placeholder;
+     the system will rewrite it using the live results.
+
+USE google_search ONLY when user explicitly wants the browser opened:
+  • "open google and search X", "show me google results"
 
 USE youtube_search for:
   • "play song", "watch video"
@@ -415,8 +429,46 @@ Remember: ALWAYS generate full, meaningful content - never just repeat the topic
 """
 
 
+def _synthesize_from_web_search(user_input: str, search_text: str) -> str:
+    """Second-pass LLM call: answer the user using live search results."""
+    role = get_active_role()
+    role_hint = f"Respond in the voice of: {role['name']}." if role.get("id") != "default" else ""
+    prompt = f"""You are VENOM AI. {role_hint}
+Answer the user's question using ONLY the web search results below.
+Be concise (under 500 chars if possible), accurate, and cite key facts.
+Do NOT return JSON. Plain natural language only.
+If results are weak, say what you found and note uncertainty.
+
+USER QUESTION:
+{user_input}
+
+WEB SEARCH RESULTS:
+{search_text}
+"""
+    try:
+        answer = ask_llm(prompt)
+        # Strip accidental JSON wrappers
+        if answer and answer.strip().startswith("{"):
+            parsed = extract_json(answer)
+            if parsed:
+                try:
+                    obj = json.loads(parsed)
+                    answer = obj.get("final_response") or answer
+                except Exception:
+                    pass
+        return (answer or "").strip()
+    except Exception as e:
+        print(f"[web_search synthesize] {e}")
+        return ""
+
+
 def process_query(user_input: str):
     """Main query processing pipeline"""
+    global _last_response_meta
+    _last_response_meta = {"sources": [], "task_type": "action"}
+
+    from tools.web_search import clear_last_search, get_last_search_results, format_sources_payload
+    clear_last_search()
     
     # Check if this is a response to clarifying question
     if interaction_manager.interaction_state["waiting_for_response"]:
@@ -425,10 +477,12 @@ def process_query(user_input: str):
         user_input = f"{interaction_manager.interaction_state['last_question']}\nUser response: {clarified}"
     
     context = get_context()
-    system_prompt = build_system_prompt()
+    system_prompt = build_system_prompt() + get_role_prompt_addon()
     
     session_files = get_context_summary()
-    prompt = f"{system_prompt}\n\nSESSION FILES: {session_files}\n\nContext:\n{context}\n\nUser:\n{user_input}"
+    active = get_active_role()
+    role_line = f"ACTIVE ROLE: {active['emoji']} {active['name']}"
+    prompt = f"{system_prompt}\n\n{role_line}\n\nSESSION FILES: {session_files}\n\nContext:\n{context}\n\nUser:\n{user_input}"
     
     raw = ask_llm(prompt)
     json_text = extract_json(raw)
@@ -479,6 +533,34 @@ def process_query(user_input: str):
     execution_logs = execute_plan(steps)
     
     final_response = data.get("final_response", "")
+    task_type = "action"
+
+    # If web_search ran, synthesize a live answer + attach sources
+    used_web_search = any(s.get("action") == "web_search" for s in steps)
+    if used_web_search:
+        search_blob = get_last_search_results()
+        # Pull the raw tool output from logs as fallback context
+        search_text = ""
+        for log in execution_logs:
+            if isinstance(log, str) and log.startswith("web_search:"):
+                search_text = log[len("web_search:"):].strip()
+                break
+        if not search_text and search_blob.get("results"):
+            search_text = json.dumps(search_blob, ensure_ascii=False)
+
+        synthesized = _synthesize_from_web_search(user_input, search_text) if search_text else ""
+        if synthesized:
+            final_response = synthesized
+        sources = format_sources_payload()
+        _last_response_meta = {"sources": sources, "task_type": "web_search"}
+        task_type = "web_search"
+        if sources and "http" not in final_response.lower():
+            # Append a short sources footer for TTS-friendly text
+            titles = [s["title"] for s in sources[:3] if s.get("title")]
+            if titles:
+                final_response = final_response.rstrip() + "\n\nSources: " + " · ".join(titles)
+    else:
+        _last_response_meta = {"sources": [], "task_type": task_type}
     
     # Save to memory
     add_memory(user_input, final_response)

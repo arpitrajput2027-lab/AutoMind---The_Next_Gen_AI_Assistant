@@ -1,10 +1,35 @@
 "use client";
 
-import { useRef, useState, useCallback, Suspense } from "react";
+import { useRef, useState, useCallback, useEffect, Suspense } from "react";
 import { Canvas } from "@react-three/fiber";
-import { OrbitControls, Environment } from "@react-three/drei";
+import { OrbitControls } from "@react-three/drei";
 import Avatar3D from "./Avatar3D";
 import { useAvatarStore } from "@/store/avatarStore";
+
+const AVATAR_W = 280;
+const AVATAR_H = 340;
+const MARGIN = 16;
+
+function defaultPosition() {
+  if (typeof window === "undefined") {
+    return { x: MARGIN, y: 400 };
+  }
+  // Bottom-left of the viewport (above a little margin)
+  return {
+    x: MARGIN,
+    y: Math.max(MARGIN, window.innerHeight - AVATAR_H - MARGIN),
+  };
+}
+
+function clampPos(x: number, y: number) {
+  if (typeof window === "undefined") return { x, y };
+  const maxX = Math.max(MARGIN, window.innerWidth - AVATAR_W - MARGIN);
+  const maxY = Math.max(MARGIN, window.innerHeight - AVATAR_H - MARGIN);
+  return {
+    x: Math.min(Math.max(MARGIN, x), maxX),
+    y: Math.min(Math.max(MARGIN, y), maxY),
+  };
+}
 
 function AvatarLoader() {
   return (
@@ -16,43 +41,51 @@ function AvatarLoader() {
 }
 
 export default function AvatarWindow() {
-  const [pos, setPos] = useState({
-    x: 230, // just next to the sidebar
-    y: typeof window !== "undefined" ? window.innerHeight - 420 : 20,
-  });
-
+  const [pos, setPos] = useState(defaultPosition);
   const dragging = useRef(false);
   const offset = useRef({ x: 0, y: 0 });
   const avatarState = useAvatarStore((s) => s.avatarState);
 
-  const onMouseDown = useCallback(
-    (e: React.MouseEvent) => {
-      dragging.current = true;
-      offset.current = { x: e.clientX - pos.x, y: e.clientY - pos.y };
-    },
-    [pos]
-  );
-
-  const onMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!dragging.current) return;
-    setPos({
-      x: e.clientX - offset.current.x,
-      y: e.clientY - offset.current.y,
-    });
+  // Keep bottom-left if window resizes and user hasn't moved far
+  useEffect(() => {
+    const onResize = () => {
+      setPos((prev) => clampPos(prev.x, prev.y));
+    };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  const onMouseUp = useCallback(() => {
-    dragging.current = false;
+  // Global mouse listeners so drag works outside the window
+  useEffect(() => {
+    const onMove = (e: MouseEvent) => {
+      if (!dragging.current) return;
+      setPos(clampPos(e.clientX - offset.current.x, e.clientY - offset.current.y));
+    };
+    const onUp = () => {
+      dragging.current = false;
+    };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
   }, []);
+
+  const onMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    dragging.current = true;
+    offset.current = { x: e.clientX - pos.x, y: e.clientY - pos.y };
+  }, [pos]);
 
   const borderColor =
     avatarState === "listening"
-      ? "#ef4444" // red
+      ? "#ef4444"
       : avatarState === "thinking"
-      ? "#8b6a3e" // bronze
+      ? "#8b6a3e"
       : avatarState === "speaking"
-      ? "#5f7350" // success green
-      : "rgba(26,24,20,0.1)"; // subtle ink
+      ? "#5f7350"
+      : "rgba(26,24,20,0.1)";
 
   const stateLabel =
     avatarState === "listening"
@@ -63,8 +96,8 @@ export default function AvatarWindow() {
       ? "● Speaking"
       : "● Idle";
 
-  const stateColor = 
-      avatarState === "listening"
+  const stateColor =
+    avatarState === "listening"
       ? "text-red-500"
       : avatarState === "thinking"
       ? "text-bronze"
@@ -78,20 +111,18 @@ export default function AvatarWindow() {
         position: "fixed",
         left: pos.x,
         top: pos.y,
-        width: 320,
-        height: 380,
+        width: AVATAR_W,
+        height: AVATAR_H,
         zIndex: 1000,
-        borderColor: borderColor
+        borderColor,
       }}
       className="shadow-2xl rounded-xl overflow-hidden bg-cream border"
-      onMouseMove={onMouseMove}
-      onMouseUp={onMouseUp}
-      onMouseLeave={onMouseUp}
     >
-      {/* Header */}
+      {/* Drag handle */}
       <div
         onMouseDown={onMouseDown}
-        className="px-4 py-2 bg-parchment flex items-center justify-between cursor-grab select-none border-b border-black/5"
+        className="px-3 py-2 bg-parchment flex items-center justify-between cursor-grab active:cursor-grabbing select-none border-b border-black/5"
+        title="Drag to move"
       >
         <span className="font-serif font-bold text-sm text-ink">
           AutoMind Avatar
@@ -101,12 +132,8 @@ export default function AvatarWindow() {
         </span>
       </div>
 
-      {/* Canvas */}
       <div className="w-full h-[calc(100%-37px)] bg-stone-100 relative">
-        <Canvas
-           camera={{ position: [0, 1.5, 2.8], fov: 38 }}
-           className="w-full h-full"
-        >
+        <Canvas camera={{ position: [0, 1.5, 2.8], fov: 38 }} className="w-full h-full">
           <ambientLight intensity={0.75} color="#faf8f4" />
           <directionalLight position={[2, 4, 3]} intensity={1.0} color="#ffffff" />
           <pointLight position={[-2, 3, 2]} intensity={0.4} color="#f4f0e8" />

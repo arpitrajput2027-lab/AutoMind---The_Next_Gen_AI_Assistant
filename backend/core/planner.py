@@ -25,7 +25,7 @@ VALID_ACTIONS = {
     "generate_code", "open_vscode_with_file",
     
     # Web
-    "youtube_search", "google_search", "open_url",
+    "youtube_search", "google_search", "web_search", "open_url",
     
     # Communication
     "send_whatsapp_message", "send_email_with_preview",

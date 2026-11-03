@@ -178,7 +178,8 @@ import base64
 import requests as http_requests
 import tempfile
 from pathlib import Path
-from core.assistant import process_query
+from core.assistant import process_query, get_last_response_meta
+from core.roles import list_roles, set_role, get_active_role
 from core import execution_control
 from config import MOBILE_SERVER_HOST, MOBILE_SERVER_PORT
 from dotenv import load_dotenv
@@ -240,6 +241,11 @@ async def health_check():
         "mobile_dir": str(MOBILE_DIR),
         "mobile_dir_exists": MOBILE_DIR.exists()
     }
+
+@app.get("/api/roles")
+async def api_list_roles():
+    """List available chat roles + currently active role"""
+    return {"roles": list_roles(), "active": get_active_role()}
 
 @app.post("/execute")
 async def execute_command(command: dict):
@@ -469,12 +475,15 @@ async def _run_command(websocket: WebSocket, user_input: str):
                 "detail": "",
             })
 
+        meta = get_last_response_meta()
         await websocket.send_json({
             "type": "response",
             "message": response,
             "response": response,
             "success": True,
-            "task_type": "action",
+            "task_type": meta.get("task_type") or "action",
+            "sources": meta.get("sources") or [],
+            "role": get_active_role(),
         })
 
         # Emit file preview AFTER execution (we're back in async context — no threading issues)
@@ -543,6 +552,11 @@ async def _handle_websocket(websocket: WebSocket):
 
     try:
         await websocket.send_json({"type": "connected", "message": "Connected to VENOM AI Desktop"})
+        await websocket.send_json({
+            "type": "roles_list",
+            "roles": list_roles(),
+            "active": get_active_role(),
+        })
 
         while True:
             try:
@@ -629,6 +643,29 @@ async def _handle_websocket(websocket: WebSocket):
                         "type": "model_switched",
                         "model": model,
                         "message": f"Switched to {model}",
+                    })
+
+                # ── Role switch ──────────────────────────────────────────────
+                elif command_type == "switch_role":
+                    role_id = data_json.get("role_id") or data_json.get("role", "default")
+                    custom_name = data_json.get("custom_name") or data_json.get("name")
+                    custom_prompt = data_json.get("custom_prompt") or data_json.get("prompt")
+                    try:
+                        role = set_role(role_id, custom_name=custom_name, custom_prompt=custom_prompt)
+                        await websocket.send_json({
+                            "type": "role_switched",
+                            "role": role,
+                            "message": f"Switched to {role['emoji']} {role['name']}",
+                        })
+                    except ValueError as e:
+                        await websocket.send_json({"type": "error", "message": str(e)})
+
+                # ── List roles ───────────────────────────────────────────────
+                elif command_type == "list_roles":
+                    await websocket.send_json({
+                        "type": "roles_list",
+                        "roles": list_roles(),
+                        "active": get_active_role(),
                     })
 
                 # ── Ping ─────────────────────────────────────────────────────

@@ -12,6 +12,7 @@ from tools import (
     preview_tools,
     iot_tools
 )
+from tools import web_search as web_search_tools
 from core.vision import capture_screen, analyze_screen_with_llm
 
 TOOL_REGISTRY = {
@@ -73,6 +74,7 @@ TOOL_REGISTRY = {
     # ===== WEB =====
     "youtube_search": web_tools.youtube_search,
     "google_search": web_tools.google_search,
+    "web_search": web_search_tools.web_search,
     "open_url": web_tools.open_url,
     
     # ===== COMMUNICATION =====

@@ -33,6 +33,10 @@ module.exports = {
           alt: "#faf8f4",
         },
         rule: "rgba(26,24,20,0.12)",
+        cyan: {
+          DEFAULT: "#0d7377",
+          dim: "rgba(13, 115, 119, 0.12)",
+        },
       },
       fontFamily: {
         sans: ["Inter", "sans-serif"],
